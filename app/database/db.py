@@ -2,6 +2,8 @@ import asyncpg
 import os
 
 class Database:
+
+    # Initialize the database 
     def __init__(self):
         self.user = os.environ.get("POSTGRES_USER")
         self.password = os.environ.get("POSTGRES_PASSWORD")
@@ -13,6 +15,8 @@ class Database:
         self._connection_pool = None
         self.con = None
 
+    # Function to connect to the database
+    # Create a connection pool
     async def connect(self):
         if not self._connection_pool:
             try:
@@ -31,11 +35,17 @@ class Database:
                 print("Database ERROR while connecting: ", e)
                 raise e
     
+    # Function to close the connection pool
     async def close(self):
         if self._connection_pool:
             await self._connection_pool.close()
             self._connection_pool = None
 
+    # All of the functions below will first try and
+    # get a connection from the connection pool
+    # and then after executing the query, release the connection
+
+    # Function to fetch multiple rows
     async def fetch_rows(self, query: str, *args):
         if not self._connection_pool:
             await self.connect()
@@ -50,6 +60,7 @@ class Database:
             finally:
                 await self._connection_pool.release(self.con)
 
+    # Function to fetch a single row
     async def fetch_row(self, query: str, *args):
         if not self._connection_pool:
             await self.connect()
@@ -64,6 +75,8 @@ class Database:
             finally:
                 await self._connection_pool.release(self.con)
     
+    # Function to execute a query that returns a single value
+    # Example: INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING user_id;
     async def fetch_val(self, query: str, *args):
         if not self._connection_pool:
             await self.connect()
@@ -78,6 +91,7 @@ class Database:
             finally:
                 await self._connection_pool.release(self.con)
 
+    # Function to execute any query
     async def execute(self, query: str, *args):
         if not self._connection_pool:
             await self.connect()

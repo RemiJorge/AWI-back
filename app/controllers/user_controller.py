@@ -6,7 +6,7 @@ from ..models.user import User
 db = get_db()
 
 
-# Function to get the user from the database, will be moved to controllers/user_controller.py
+# Function to get the user from the database using the username
 async def find_user_by_username(username: str) -> User:
     db = get_db()
     query = """
