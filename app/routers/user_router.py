@@ -13,5 +13,5 @@ user_router = APIRouter(
 )
 
 @user_router.get("/{username}", response_model=User)
-async def get_data(username: str, token: Annotated[None, Security(verify_token, scopes=["Admin"])]):
-    return find_user_by_username(user.username)
+async def get_user(username: str, token: Annotated[None, Security(verify_token, scopes=["Admin"])]):
+    return await find_user_by_username(username)
