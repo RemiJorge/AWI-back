@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
-from app.database.db_session import database_instance
+from app.database.db_session import get_db
 from dotenv import load_dotenv
 
 # Load the environment variables from the .env file
@@ -28,11 +28,12 @@ app.add_middleware(
 @app.on_event("startup")
 async def on_startup():
     try:
-        await database_instance.connect()
+        db = get_db()
+        await db.connect()
     except Exception as e:
         print("main ERROR while connecting: ", e)
         exit(1)
-    app.state.db = database_instance
+    app.state.db = db
 
 
 @app.on_event("shutdown")
@@ -45,12 +46,12 @@ async def read_root():
     return {"message": "Hello, World"}
 
 # Import the routers
-from app.routers.user import user_router
+from app.routers.user_router import user_router
 from app.routers.auth import auth_router
 from app.routers.items_router import item_router
 
-app.include_router(user_router, prefix="/user", tags=["user"])
-app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(user_router)
+app.include_router(auth_router)
 app.include_router(item_router)
 
 

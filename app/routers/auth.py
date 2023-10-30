@@ -16,8 +16,10 @@ from pydantic import BaseModel, ValidationError
 from fastapi.responses import JSONResponse
 import os
 
+from ..controllers.user_controller import find_user_by_username
+
 # Import models
-from ..models.user import User, UserInDB
+from ..models.user import User
 
 # To get database session
 from ..database.db_session import get_db
@@ -49,7 +51,10 @@ oauth2_scheme = OAuth2PasswordBearer(
     scopes={"User": "Read information about the current user.", "Admin": "Read items."},
 )
 
-auth_router = APIRouter() 
+auth_router = APIRouter(
+     prefix="/auth",
+     tags=["auth"]
+) 
 
 
 # Function to verify the password
@@ -62,42 +67,12 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-# Function to get the user from the database, will be moved to controllers/user_controller.py
-async def get_user(username: str):
-    db = get_db()
-    query = """
-    SELECT
-        u.user_id,
-        u.username,
-        u.email,
-        u.password,
-        u.disabled,
-        array_agg(r.role_name) AS roles
-    FROM
-        users u
-    JOIN
-        user_roles ur ON u.user_id = ur.user_id
-    JOIN
-        roles r ON ur.role_id = r.role_id
-    WHERE
-        u.username = $1
-    GROUP BY
-        u.user_id, u.username, u.email;
-    """
-    result = await db.fetch_row(query, username)
-    if result is None:
-        return None
-    user_dict = dict(result)
-    user_in_db = UserInDB(username=user_dict["username"],email=user_dict["email"],name=user_dict["username"], disabled=user_dict["disabled"], hashed_password=user_dict["password"], roles=user_dict["roles"])
-    return user_in_db
-
-
 # Function to authenticate the user, check if the user exists and the password is correct
 async def authenticate_user(username: str, password: str):
-    user = await get_user(username)
+    user = await find_user_by_username(username)
     if not user:
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user.password):
         return False
     return user
 
@@ -137,10 +112,10 @@ async def login_for_access_token(
 #Route to register a new user in the database
 # Fonction temporaire a refaire
 @auth_router.post("/register")
-async def register(request : Request, user: UserInDB):
+async def register(request : Request, user: User):
     username = user.username
     email = user.email
-    password = user.hashed_password
+    password = user.password
     password = get_password_hash(password)
     query = "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING user_id;"
     try:
@@ -193,7 +168,7 @@ async def verify_token(
         raise credentials_exception
     
     # Get the user from the database
-    user = await get_user(username=token_data.username)
+    user = await find_user_by_username(username=token_data.username)
     if user is None:
         raise credentials_exception
 
@@ -209,72 +184,3 @@ async def verify_token(
                 detail="Not enough permissions",
                 headers={"WWW-Authenticate": authenticate_value},
             )
-
-
-
-
-
-# # Deprecated functions, but do not delete
-
-
-
-# @auth_router.get("/users/me/", response_model=User)
-# async def read_users_me(
-#     current_user: Annotated[User, Depends(get_current_active_user)]
-# ):
-#     return current_user
-
-
-# @auth_router.get("/users/me/items/")
-# async def read_own_items(
-#     current_user: Annotated[User, Security(get_current_active_user, scopes=["items"])]
-# ):
-#     return [{"item_id": "Foo", "owner": current_user.username}]
-
-
-# @auth_router.get("/status/")
-# async def read_system_status(current_user: Annotated[User, Depends(get_current_user)]):
-#     return {"status": "ok"}
-
-
-
-# async def get_current_user(
-#     security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)]
-# ):
-#     if security_scopes.scopes:
-#         authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
-#     else:
-#         authenticate_value = "Bearer"
-#     credentials_exception = HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="Could not validate credentials",
-#         headers={"WWW-Authenticate": authenticate_value},
-#     )
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         username: str = payload.get("sub")
-#         if username is None:
-#             raise credentials_exception
-#         token_scopes = payload.get("scopes", [])
-#         token_data = TokenData(scopes=token_scopes, username=username)
-#     except (JWTError, ValidationError):
-#         raise credentials_exception
-#     user = await get_user(username=token_data.username)
-#     if user is None:
-#         raise credentials_exception
-#     for scope in security_scopes.scopes:
-#         if scope not in token_data.scopes:
-#             raise HTTPException(
-#                 status_code=status.HTTP_401_UNAUTHORIZED,
-#                 detail="Not enough permissions",
-#                 headers={"WWW-Authenticate": authenticate_value},
-#             )
-#     return user
-
-
-# async def get_current_active_user(
-#     current_user: Annotated[User, Security(get_current_user, scopes=["me"])]
-# ):
-#     if current_user.disabled:
-#         raise HTTPException(status_code=400, detail="Inactive user")
-#     return current_user

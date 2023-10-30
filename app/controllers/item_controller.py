@@ -1,6 +1,5 @@
 from typing import List
 from fastapi import HTTPException, status
-from asyncpg import Connection, Record
 from ..database.db_session import get_db
 from ..models.item import Item  
 
@@ -14,7 +13,7 @@ class RecordNotFound(Exception):
 
 
 # Function to create a new item
-async def create_item(item: Item):
+async def create_item(item: Item) -> Item:
     query = "INSERT INTO items (name, description) VALUES ($1, $2) RETURNING item_id;"
     try:
         result = await db.fetch_val(query, item.name, item.description)
@@ -39,7 +38,7 @@ async def find_all_items() -> List[Item]:
         )
 
 # Function to retrieve a single item by ID
-async def find_item_by_id(item_id: int):
+async def find_item_by_id(item_id: int) -> Item:
     query = "SELECT item_id, name, description FROM items WHERE item_id = $1"
     try:
         result = await db.fetch_row(query, item_id)
