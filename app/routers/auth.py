@@ -4,7 +4,7 @@
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import Depends, APIRouter, HTTPException, Security, status, Request
+from fastapi import Depends, APIRouter, HTTPException, Security, status, Request, Cookie
 from fastapi.security import (
     OAuth2PasswordBearer,
     OAuth2PasswordRequestForm,
@@ -30,7 +30,7 @@ from ..database.db_session import get_db
 # openssl rand -hex 32
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_MINUTES = 1
 
 
 class Token(BaseModel):
@@ -77,8 +77,8 @@ async def authenticate_user(username: str, password: str):
     return user
 
 
-# This function creates the access token, it encodes the payload and signs it with the secret key
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+# This function creates a token, it encodes the payload and signs it with the secret key
+def create_token(data: dict, expires_delta: timedelta | None = None):
     # Data to be encoded in the JWT
     to_encode = data.copy()
     if expires_delta:
@@ -92,8 +92,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 # Route to get the access token, equivalent to login
 @auth_router.post("/token", response_model=Token)
-async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+async def login_for_tokens(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    response: JSONResponse
 ):
     # Authenticate the user (check if the user exists and the password is correct)
     user = await authenticate_user(form_data.username, form_data.password)
@@ -101,12 +102,96 @@ async def login_for_access_token(
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     # Create the access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
+    access_token = create_token(
         data={"sub": user.username, "scopes": user.roles},
         expires_delta=access_token_expires,
     )
+
+    # Create refresh token
+    refresh_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES * 5)
+    refresh_token = create_token(
+        data={"sub": user.username, "scopes": user.roles},
+        expires_delta=refresh_token_expires,
+    )
+
+    # Set the cookie with the refresh token
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        max_age=refresh_token_expires.total_seconds(),
+        path="/",
+        samesite="None"
+    )
+
     return {"access_token": access_token, "token_type": "bearer"}
 
+
+# Route to get a new access token using the refresh token
+@auth_router.post("/refresh-token", response_model=Token)
+async def refresh_token(
+    refresh_token: Annotated[str | None , Cookie()] = None
+):
+    try:
+        # If there is no refresh token, raise an exception
+        if refresh_token is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+        # Decode the refresh token
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        token_scopes = payload.get("scopes", [])
+        token_data = TokenData(scopes=token_scopes, username=username)
+    # Token expired
+    except (JWTError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+
+    # Get the user from the database
+    user = await find_user_by_username(username=token_data.username)
+    # If the user does not exist, raise an exception
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+
+    # Create the new access token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_token(
+        data={"sub": user.username, "scopes": user.roles},
+        expires_delta=access_token_expires,
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+# Route to revoke the refresh token
+@auth_router.delete("/logout")
+async def logout(
+    response: JSONResponse,
+    refresh_token: Annotated[str | None , Cookie()] = None
+):
+    # If there is no refresh token, raise an exception
+    if refresh_token is None:
+        print("No refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+    # Set the cookie with the refresh token
+    response.set_cookie(
+        key="refresh_token",
+        value="",
+        httponly=True,
+        max_age=0,
+        path="/",
+        samesite="None"
+    )
+    return {"message": "Logout successful"}
 
 
 #Route to register a new user in the database

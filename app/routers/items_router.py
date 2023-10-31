@@ -12,7 +12,7 @@ from ..models.item import Item
 
 
 item_router = APIRouter(
-    prefix="/item",
+    prefix="/items",
     tags=["item"],
 )
 # Note it is possible to put dependencies on the router itself
