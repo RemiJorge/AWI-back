@@ -10,7 +10,7 @@ CREATE TABLE users (
     username VARCHAR(255) NOT NULL UNIQUE, -- Enforce uniqueness for username
     password VARCHAR(255) NOT NULL, -- You should hash and salt the password
     email VARCHAR(255) NOT NULL UNIQUE, -- Enforce uniqueness for email
-    disabled BOOLEAN DEFAULT FALSE, -- Add the "disabled" column with a default value of FALSE
+    disabled BOOLEAN DEFAULT FALSE -- Add the "disabled" column with a default value of FALSE
     -- Add other user-related fields as needed
 );
 
