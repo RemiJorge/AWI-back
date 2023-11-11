@@ -37,6 +37,12 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class UserAndToken(BaseModel):
+    username: str
+    roles: list[str]
+    access_token : str
+    token_type: str
+
 
 class TokenData(BaseModel):
     username: str | None = None
@@ -91,7 +97,7 @@ def create_token(data: dict, expires_delta: timedelta | None = None):
 
 
 # Route to get the access token, equivalent to login
-@auth_router.post("/token", response_model=Token)
+@auth_router.post("/token", response_model=UserAndToken)
 async def login_for_tokens(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     response: JSONResponse
@@ -124,11 +130,14 @@ async def login_for_tokens(
         samesite="None"
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Return the user and the access token
+    payload = UserAndToken(username=user.username, roles=user.roles, access_token=access_token, token_type="bearer")
+
+    return payload
 
 
 # Route to get a new access token using the refresh token
-@auth_router.post("/refresh-token", response_model=Token)
+@auth_router.post("/refresh-token", response_model=UserAndToken)
 async def refresh_token(
     refresh_token: Annotated[str | None , Cookie()] = None
 ):
@@ -167,7 +176,10 @@ async def refresh_token(
         expires_delta=access_token_expires,
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Return the user and the access token
+    payload = UserAndToken(username=user.username, roles=user.roles, access_token=access_token, token_type="bearer")
+    
+    return payload
 
 # Route to revoke the refresh token
 @auth_router.delete("/logout")

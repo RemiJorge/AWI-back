@@ -18,11 +18,11 @@ item_router = APIRouter(
 # Note it is possible to put dependencies on the router itself
 # eg: dependencies=[Security(verify_token, scopes=["Admin"])]
 
-@item_router.post("/", response_model=Item, description="Create a new item")
+@item_router.post("", response_model=Item, description="Create a new item")
 async def create_item_route(item: Item, token: Annotated[None, Security(verify_token, scopes=["Admin"])]):
     return await create_item(item)
 
-@item_router.get("/", response_model=list[Item], description="Get all items")
+@item_router.get("", response_model=list[Item], description="Get all items")
 async def get_all_items_route(token: Annotated[None, Security(verify_token, scopes=["Admin"])]):
     return await find_all_items()
 
@@ -34,6 +34,6 @@ async def get_item_route(id: int, token: Annotated[None, Security(verify_token, 
 async def delete_item_route(id: int, token: Annotated[None, Security(verify_token, scopes=["Admin"])]):
     return await delete_item(id)
 
-@item_router.delete("/", response_model=dict, description="Delete all items")
+@item_router.delete("", response_model=dict, description="Delete all items")
 async def delete_all_items_route(token: Annotated[None, Security(verify_token, scopes=["Admin"])]):
     return await delete_all_items()
