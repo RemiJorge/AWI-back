@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Security
 from typing import Annotated
-from .auth import verify_token
+from ..controllers.auth_controller import verify_token
 from app.controllers.item_controller import (
     create_item,
     find_all_items,

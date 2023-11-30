@@ -47,7 +47,7 @@ async def read_root():
 
 # Import the routers
 from app.routers.user_router import user_router
-from app.routers.auth import auth_router
+from app.routers.auth_router import auth_router
 from app.routers.items_router import item_router
 
 app.include_router(user_router)

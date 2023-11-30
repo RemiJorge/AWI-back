@@ -2,7 +2,7 @@ from fastapi import APIRouter, Security
 from fastapi.responses import JSONResponse
 from typing import Annotated
 
-from .auth import verify_token
+from ..controllers.auth_controller import verify_token
 from ..controllers.user_controller import find_user_by_username
 from ..models.user import User
 
