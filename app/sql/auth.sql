@@ -1,3 +1,7 @@
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;
+
 -- Create the "roles" table to store user roles
 CREATE TABLE roles (
     role_id SERIAL PRIMARY KEY,
@@ -26,7 +30,9 @@ CREATE TABLE user_roles (
 -- Example: Insert some initial roles into the "roles" table
 INSERT INTO roles (role_name) VALUES
     ('Admin'),
-    ('User');
+    ('Referent'),
+    ('User'),
+    ('Super');
 
 -- Example: Insert a user into the "users" table and associate them with a role
 -- Replace the password value with a hashed and salted password
@@ -38,4 +44,10 @@ INSERT INTO user_roles (user_id, role_id)
 SELECT user_id, role_id
 FROM users, roles
 WHERE users.username = 'example_user' AND roles.role_name = 'User';
+
+--Make a user have all roles
+-- INSERT INTO user_roles (user_id, role_id)
+-- SELECT user_id, role_id
+-- FROM users, roles
+-- WHERE users.username = 'example_user';
 
