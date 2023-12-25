@@ -21,17 +21,16 @@ CREATE TABLE users (
 
 -- Create the "user_roles" table to manage user-to-role relationships
 CREATE TABLE user_roles (
-    user_role_id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(user_id),
     role_id INT REFERENCES roles(role_id),
-    UNIQUE (user_id, role_id) -- Enforce uniqueness for the combination of user_id and role_id
+    PRIMARY KEY (user_id, role_id)
 );
 
 -- Example: Insert some initial roles into the "roles" table
 INSERT INTO roles (role_name) VALUES
-    ('Admin'),
-    ('Referent'),
     ('User'),
+    ('Referent'),
+    ('Admin'),
     ('Super');
 
 -- Example: Insert a user into the "users" table and associate them with a role

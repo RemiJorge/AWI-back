@@ -16,7 +16,7 @@ from pydantic import BaseModel, ValidationError
 from fastapi.responses import JSONResponse
 import os
 
-from ..controllers.user_controller import find_user_by_username
+from ..controllers.user_controller import find_user_by_username, find_user_by_email, create_user
 
 # Import models
 from ..models.user import User
@@ -178,7 +178,7 @@ async def logout_remove_refresh_token(response: JSONResponse ,refresh_token: str
 # Function that verifies the access token and the scopes
 async def verify_token(
     security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)]
-):
+) -> User:
     # Prepare the authentication value to be included in the response headers
     if security_scopes.scopes:
         authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
@@ -231,3 +231,37 @@ async def verify_token(
                 detail="Not enough permissions",
                 headers={"WWW-Authenticate": authenticate_value},
             )
+    # Return the user
+    return user
+            
+            
+# Function to check if a user exists with the given username
+async def does_user_exist(username: str):
+    user = await find_user_by_username(username)
+    if user is None:
+        return False
+    return True
+
+# Function to check if a user exists with the given email
+async def does_email_exist(email: str):
+    user = await find_user_by_email(email)
+    if user is None:
+        return False
+    return True
+
+
+async def register_user(username: str, email: str, password: str):
+    # Check if user already exists
+    user_exists = await does_user_exist(username)
+    if user_exists:
+        return JSONResponse(content={"message": "Username already exists"}, status_code=409)
+    # Check if email already exists
+    email_exists = await does_email_exist(email)
+    if email_exists:
+        return JSONResponse(content={"message": "Email already exists"}, status_code=409)
+    # Hash the password
+    hashed_password = get_password_hash(password)
+    user = User(username=username, email=email, password=hashed_password, name=username, roles=["User", "Referent", "Admin", "Super"], disabled=False)
+    # Create the user in the database
+    payload = await create_user(user)
+    return payload

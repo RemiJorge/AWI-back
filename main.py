@@ -3,16 +3,35 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
 from app.database.db_session import get_db
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 
 # Load the environment variables from the .env file
 load_dotenv()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Executed on startup
+    print("Startup")
+    try:
+        db = get_db()
+        await db.connect()
+    except Exception as e:
+        print("main ERROR while connecting: ", e)
+        exit(1)
+    app.state.db = db
+    yield
+    # Executed on shutdown
+    print("Shutdown")
+    await app.state.db.close()
+
 
 # Create a FastAPI app
 app = FastAPI(
     title="My First FastAPI",
     description="This is my first FastAPI application",
     version="0.1.0",
-    docs_url="/docs"
+    docs_url="/docs",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -24,21 +43,6 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-
-@app.on_event("startup")
-async def on_startup():
-    try:
-        db = get_db()
-        await db.connect()
-    except Exception as e:
-        print("main ERROR while connecting: ", e)
-        exit(1)
-    app.state.db = db
-
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    await app.state.db.close()
 
 # Define a root endpoint
 @app.get("/")
