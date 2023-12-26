@@ -11,11 +11,10 @@ CREATE TABLE roles (
 -- Create the "users" table to store user information
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
-    username VARCHAR(255) NOT NULL UNIQUE, -- Enforce uniqueness for username
-    password VARCHAR(255) NOT NULL, -- You should hash and salt the password
-    email VARCHAR(255) NOT NULL UNIQUE, -- Enforce uniqueness for email
-    disabled BOOLEAN DEFAULT FALSE -- Add the "disabled" column with a default value of FALSE
-    -- Add other user-related fields as needed
+    username VARCHAR(255) NOT NULL UNIQUE, 
+    password VARCHAR(255) NOT NULL, 
+    email VARCHAR(255) NOT NULL UNIQUE, 
+    disabled BOOLEAN DEFAULT FALSE 
 );
 
 
@@ -26,7 +25,7 @@ CREATE TABLE user_roles (
     PRIMARY KEY (user_id, role_id)
 );
 
--- Example: Insert some initial roles into the "roles" table
+-- Insert some initial roles into the "roles" table
 INSERT INTO roles (role_name) VALUES
     ('User'),
     ('Referent'),

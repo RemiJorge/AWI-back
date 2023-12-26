@@ -53,10 +53,14 @@ async def read_root():
 from app.routers.user_router import user_router
 from app.routers.auth_router import auth_router
 from app.routers.items_router import item_router
+from app.routers.file_router import file_router
+from app.routers.inscription_router import inscription_router
 
 app.include_router(user_router)
 app.include_router(auth_router)
-app.include_router(item_router)
+#app.include_router(item_router)
+app.include_router(file_router)
+app.include_router(inscription_router)
 
 
 if __name__ == "__main__":

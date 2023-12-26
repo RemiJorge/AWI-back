@@ -105,5 +105,25 @@ class Database:
                 raise e
             finally:
                 await self._connection_pool.release(self.con)
+                
+    # Function to insert multiple rows
+    async def insert_many(self, table_name: str, data: list, columns: list):
+        if not self._connection_pool:
+            await self.connect()
+        else:
+            self.con = await self._connection_pool.acquire()
+            try:
+                # Use copy_records_to_table for efficient bulk inserts
+                result = await self.con.copy_records_to_table(
+                    table_name=table_name,
+                    records=data,
+                    columns=columns,
+                )
+                return result
+            except Exception as e:
+                print("Database ERROR while inserting many: ", e)
+                raise e
+            finally:
+                await self._connection_pool.release(self.con)
 
 

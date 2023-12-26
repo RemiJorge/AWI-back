@@ -12,7 +12,7 @@ from fastapi.security import (
 )
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from fastapi.responses import JSONResponse
 import os
 
@@ -29,7 +29,7 @@ from ..models.auth import UserAndToken, TokenData
 # openssl rand -hex 32
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = 1
+ACCESS_TOKEN_EXPIRE_MINUTES = 5
 
 
 

@@ -1,5 +1,3 @@
-from typing import List
-from fastapi import HTTPException, status
 from ..database.db_session import get_db
 from ..models.user import User 
 
@@ -97,7 +95,7 @@ async def find_user_by_email(email: str) -> User:
 
 
 # Function that returns the role ids of the roles passed in parameter
-async def get_role_ids(roles: List[str]) -> List[int]:
+async def get_role_ids(roles: list[str]) -> list[int]:
     roles = "(" + ", ".join([f"'{role}'" for role in roles]) + ")"
     query = f"""
     SELECT
