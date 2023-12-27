@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import asyncpg
 from app.database.db_session import get_db
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
@@ -19,6 +18,7 @@ async def lifespan(app: FastAPI):
         print("main ERROR while connecting: ", e)
         exit(1)
     app.state.db = db
+    await insert_test_data(db)
     yield
     # Executed on shutdown
     print("Shutdown")
@@ -61,6 +61,55 @@ app.include_router(auth_router)
 #app.include_router(item_router)
 app.include_router(file_router)
 app.include_router(inscription_router)
+
+
+async def insert_test_data(db):
+    query = """
+    DELETE FROM inscriptions WHERE user_id = 4;"""
+    
+    await db.execute(query)
+    
+    query = """
+    DELETE FROM postes;"""
+    
+    await db.execute(query)
+    
+    query = """
+    INSERT INTO postes (poste, description_poste, max_capacity)
+    VALUES ($1, $2, $3);
+    """
+    
+    await db.execute(query, "PosteTest1", "Description du poste 1", 2)
+    await db.execute(query, "PosteTest2", "Description du poste 2", 2)
+    await db.execute(query, "PosteTest3", "Description du poste 3", 2)
+    await db.execute(query, "Animation", "Description du poste Animation", 2)
+    
+    query = """
+    INSERT INTO inscriptions (user_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+    """
+
+    # Postes
+    await db.execute(query, 4, "PosteTest1", "", "", "", "Lundi", "10h-12h", True)
+    await db.execute(query, 4, "PosteTest2", "", "", "", "Lundi", "10h-12h", True)
+    await db.execute(query, 4, "PosteTest3", "", "", "", "Lundi", "10h-12h", True)
+    await db.execute(query, 4, "Animation", "", "", "", "Lundi", "10h-12h", True)
+    await db.execute(query, 4, "PosteTest1", "", "", "", "Lundi", "12h-14h", True)
+    await db.execute(query, 4, "PosteTest2", "", "", "", "Lundi", "12h-14h", True)
+    await db.execute(query, 4, "PosteTest3", "", "", "", "Lundi", "12h-14h", True)
+    await db.execute(query, 4, "Animation", "", "", "", "Lundi", "12h-14h", True)
+
+    
+    # Zones benevoles
+    await db.execute(query, 4, "Animation", "ZoneTest1", "1", "ZoneTest1a", "Lundi", "10h-12h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest1", "2", "ZoneTest1b", "Lundi", "10h-12h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest1", "3", "ZoneTest1c", "Lundi", "10h-12h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest1", "1", "ZoneTest1a", "Lundi", "12h-14h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest1", "2", "ZoneTest1b", "Lundi", "12h-14h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest1", "3", "ZoneTest1c", "Lundi", "12h-14h", False)
+    
+    print("Inserted test data")
+
 
 
 if __name__ == "__main__":
