@@ -107,6 +107,10 @@ async def insert_test_data(db):
     await db.execute(query, 4, "Animation", "ZoneTest1", "1", "ZoneTest1a", "Lundi", "12h-14h", False)
     await db.execute(query, 4, "Animation", "ZoneTest1", "2", "ZoneTest1b", "Lundi", "12h-14h", False)
     await db.execute(query, 4, "Animation", "ZoneTest1", "3", "ZoneTest1c", "Lundi", "12h-14h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest2", "4", "", "Lundi", "10h-12h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest2", "4", "", "Lundi", "12h-14h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest3", "5", "", "Lundi", "10h-12h", False)
+    await db.execute(query, 4, "Animation", "ZoneTest3", "5", "", "Lundi", "12h-14h", False)
     
     print("Inserted test data")
 

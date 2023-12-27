@@ -116,9 +116,9 @@ async def auto_assign_flexibles_to_postes():
             creneau,
             poste
             FROM
-            DuplicateCTE
+                DuplicateCTE
             WHERE
-            row_num > 1
+                row_num > 1
         ) AND is_poste = True)
     OR
         (poste = 'Animation' AND (user_id, jour, creneau) IN (
@@ -127,12 +127,60 @@ async def auto_assign_flexibles_to_postes():
             jour,
             creneau
             FROM
-            DuplicateCTE
+                DuplicateCTE
             WHERE
-            poste = 'Animation' AND row_num > 1
+                poste = 'Animation' AND row_num > 1
         ) AND is_poste = False);
     """
     
     await db.execute(query)
     
     return {"message": "Successfully auto assigned flexibles to postes"}
+
+# Function to auto assign flexibles to zones benevoles
+async def auto_assign_flexibles_to_zones_benevoles():
+    # Remove duplicates with regards to zone_plan, zone_benevole_id, zone_benevole_name, jour and creneau
+    # Lets say we have a flexible that is signed up to n zone_benevoles for a given jour and creneau
+    # We will delete n-1 of his inscriptions and keep one at random
+    
+    # We have to make sure that the flexibilities for postes are already assigned
+    await auto_assign_flexibles_to_postes()
+   
+    query = """
+    WITH DuplicateCTE AS (
+        SELECT
+            user_id,
+            poste,
+            zone_plan,
+            zone_benevole_id,
+            zone_benevole_name,
+            jour,
+            creneau,
+            ROW_NUMBER() OVER (PARTITION BY user_id, jour, creneau ORDER BY RANDOM()) AS row_num
+        FROM
+            inscriptions
+        WHERE
+            is_poste = False
+            AND poste = 'Animation'
+        )
+        DELETE FROM
+        inscriptions
+        WHERE
+        (user_id, jour, creneau, poste, zone_plan, zone_benevole_id, zone_benevole_name) IN (
+            SELECT
+            user_id,
+            jour,
+            creneau,
+            poste,
+            zone_plan,
+            zone_benevole_id,
+            zone_benevole_name
+            FROM
+                DuplicateCTE
+            WHERE
+                row_num > 1
+        ) AND is_poste = False;"""
+        
+    await db.execute(query)
+        
+    return {"message": "Successfully auto assigned flexibles to zones benevoles"}

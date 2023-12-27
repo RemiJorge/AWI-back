@@ -8,7 +8,8 @@ from ..controllers.inscription_controller import (
     desinscription_user_zone_benevole, 
     get_nb_inscriptions_poste, 
     get_nb_inscriptions_zone_benevole,
-    auto_assign_flexibles_to_postes
+    auto_assign_flexibles_to_postes,
+    auto_assign_flexibles_to_zones_benevoles
     )
 from ..models.user import User
 from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole
@@ -57,4 +58,4 @@ async def auto_assign_flexibles_to_postes_route(user: Annotated[User, Security(v
 
 @inscription_router.put("/zone-benevole/auto-assign-flexibles", response_model=dict, description="Auto assign flexibles to zones benevoles")
 async def auto_assign_flexibles_to_zones_benevoles_route(user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
-    return {"message": "Not implemented yet"}
+    return await auto_assign_flexibles_to_zones_benevoles()
