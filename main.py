@@ -64,10 +64,16 @@ app.include_router(inscription_router)
 
 
 async def insert_test_data(db):
+    # Get user_id of the test user which is user1
     query = """
-    DELETE FROM inscriptions WHERE user_id = 4;"""
+    SELECT user_id FROM users WHERE username = 'user1';"""
     
-    await db.execute(query)
+    user_id = await db.fetch_val(query)
+    
+    query = """
+    DELETE FROM inscriptions WHERE user_id = $1;"""
+    
+    await db.execute(query, user_id)
     
     query = """
     DELETE FROM postes;"""
@@ -90,27 +96,29 @@ async def insert_test_data(db):
     """
 
     # Postes
-    await db.execute(query, 4, "PosteTest1", "", "", "", "Lundi", "10h-12h", True)
-    await db.execute(query, 4, "PosteTest2", "", "", "", "Lundi", "10h-12h", True)
-    await db.execute(query, 4, "PosteTest3", "", "", "", "Lundi", "10h-12h", True)
-    await db.execute(query, 4, "Animation", "", "", "", "Lundi", "10h-12h", True)
-    await db.execute(query, 4, "PosteTest1", "", "", "", "Lundi", "12h-14h", True)
-    await db.execute(query, 4, "PosteTest2", "", "", "", "Lundi", "12h-14h", True)
-    await db.execute(query, 4, "PosteTest3", "", "", "", "Lundi", "12h-14h", True)
-    await db.execute(query, 4, "Animation", "", "", "", "Lundi", "12h-14h", True)
+    await db.execute(query, user_id, "PosteTest1", "", "", "", "Lundi", "10h-12h", True)
+    await db.execute(query, user_id, "PosteTest2", "", "", "", "Lundi", "10h-12h", True)
+    await db.execute(query, user_id, "PosteTest3", "", "", "", "Lundi", "10h-12h", True)
+    await db.execute(query, user_id, "Animation", "", "", "", "Lundi", "10h-12h", True)
+    await db.execute(query, user_id, "PosteTest1", "", "", "", "Lundi", "12h-14h", True)
+    await db.execute(query, user_id, "PosteTest2", "", "", "", "Lundi", "12h-14h", True)
+    await db.execute(query, user_id, "PosteTest3", "", "", "", "Lundi", "12h-14h", True)
+    await db.execute(query, user_id, "Animation", "", "", "", "Lundi", "12h-14h", True)
 
     
     # Zones benevoles
-    await db.execute(query, 4, "Animation", "ZoneTest1", "1", "ZoneTest1a", "Lundi", "10h-12h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest1", "2", "ZoneTest1b", "Lundi", "10h-12h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest1", "3", "ZoneTest1c", "Lundi", "10h-12h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest1", "1", "ZoneTest1a", "Lundi", "12h-14h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest1", "2", "ZoneTest1b", "Lundi", "12h-14h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest1", "3", "ZoneTest1c", "Lundi", "12h-14h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest2", "4", "", "Lundi", "10h-12h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest2", "4", "", "Lundi", "12h-14h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest3", "5", "", "Lundi", "10h-12h", False)
-    await db.execute(query, 4, "Animation", "ZoneTest3", "5", "", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Lundi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Lundi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Lundi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Esplanade-Est 1", "179", "", "Lundi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Esplanade-Est 1", "179", "", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Lundi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Lundi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Lundi", "12h-14h", False)
     
     print("Inserted test data")
 

@@ -20,17 +20,6 @@ async def refresh_csv_table(data: list):
 
     await db.insert_many("csv", data, columns)
     
-    # # Add the remaining rows to the csv table
-    # query = """
-    # SELECT poste_name
-    # from postes;
-    # """
-    # postes = await db.fetch_rows(query)
-    # postes = [poste["poste_name"] for poste in postes]
-    # columns = ["poste", "from_csv"]
-    # data = [[poste, False] for poste in postes]
-    # await db.insert_many("csv", data, columns)
-    
     return {"message": "csv table refreshed"}
 
 # Function to get all games
@@ -45,3 +34,7 @@ async def get_games_info() -> list[Game]:
     result = [Game(**row) for row in result]
     
     return result
+
+
+#async def check_and_resolve_changes():
+    
