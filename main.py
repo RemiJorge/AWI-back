@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
         print("main ERROR while connecting: ", e)
         exit(1)
     app.state.db = db
-    await insert_test_data(db)
+    #await insert_test_data(db)
     yield
     # Executed on shutdown
     print("Shutdown")
