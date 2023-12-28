@@ -125,5 +125,19 @@ class Database:
                 raise e
             finally:
                 await self._connection_pool.release(self.con)
+    
+    # Function to execute the same query multiple times with different arguments
+    async def execute_many(self, query: str, args: list):
+        if not self._connection_pool:
+            await self.connect()
+        else:
+            self.con = await self._connection_pool.acquire()
+            try:
+                await self.con.executemany(query, args)
+            except Exception as e:
+                print("Database ERROR while executing many: ", e)
+                raise e
+            finally:
+                await self._connection_pool.release(self.con)
 
 

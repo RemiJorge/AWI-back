@@ -1,9 +1,12 @@
 from ..database.db_session import get_db
 from fastapi import HTTPException
 from ..models.user import User
-from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole
+from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole
 
 db = get_db()
+
+JOURS = ["Vendredi", "Samedi", "Dimanche"]
+CRENEAUX = ["8h-10h", "10h-12h", "12h-14h", "14h-16h", "16h-18h"]
 
 # Function to sign up to a "poste"
 async def inscription_user_poste(user: User, inscription: InscriptionPoste):
@@ -55,6 +58,19 @@ async def desinscription_user_zone_benevole(user: User, inscription: Inscription
 
 # Function that returns the number of inscriptions for a given poste by day and creneau
 async def get_nb_inscriptions_poste():
+    # First get all of the possible postes
+    query = """
+    SELECT poste
+    FROM postes;
+    """
+    
+    result = await db.fetch_rows(query)
+    
+    to_send = []
+    for jour in JOURS:
+        for creneau in CRENEAUX:
+            to_send += [{"poste": row["poste"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
+    
     query = """
     SELECT poste, jour, creneau, COUNT(*) AS nb_inscriptions
     FROM inscriptions
@@ -65,12 +81,30 @@ async def get_nb_inscriptions_poste():
 
     result = await db.fetch_rows(query)
     
-    result = [{"poste": row["poste"], "jour": row["jour"], "creneau": row["creneau"], "nb_inscriptions": row["nb_inscriptions"]} for row in result]
-
-    return result
+    # Update the nb_inscriptions for each poste
+    for row in result:
+        for poste in to_send:
+            if row["poste"] == poste["poste"] and row["jour"] == poste["jour"] and row["creneau"] == poste["creneau"]:
+                poste["nb_inscriptions"] = row["nb_inscriptions"]
+    
+    return to_send
 
 # Function that returns the number of inscriptions for a given zone benevole by day and creneau
 async def get_nb_inscriptions_zone_benevole():
+    # First get all of the possible zone benevoles
+    query = """
+    SELECT DISTINCT zone_plan, zone_benevole_id, zone_benevole
+    FROM csv
+    WHERE a_animer = 'oui';
+    """
+    
+    result = await db.fetch_rows(query)
+
+    to_send = []
+    for jour in JOURS:
+        for creneau in CRENEAUX:
+            to_send += [{"poste": "Animation", "zone_plan": row["zone_plan"], "zone_benevole_id": row["zone_benevole_id"], "zone_benevole_name": row["zone_benevole"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
+    
     query = """
     SELECT poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, COUNT(*) AS nb_inscriptions
     FROM inscriptions
@@ -81,9 +115,13 @@ async def get_nb_inscriptions_zone_benevole():
 
     result = await db.fetch_rows(query)
     
-    result = [{"poste": row["poste"], "zone_plan": row["zone_plan"], "zone_benevole_id": row["zone_benevole_id"], "zone_benevole_name": row["zone_benevole_name"], "jour": row["jour"], "creneau": row["creneau"], "nb_inscriptions": row["nb_inscriptions"]} for row in result]
-
-    return result
+    # Update the nb_inscriptions for each zone benevole
+    for row in result:
+        for zone_benevole in to_send:
+            if row["zone_plan"] == zone_benevole["zone_plan"] and row["zone_benevole_id"] == zone_benevole["zone_benevole_id"] and row["zone_benevole_name"] == zone_benevole["zone_benevole_name"] and row["jour"] == zone_benevole["jour"] and row["creneau"] == zone_benevole["creneau"]:
+                zone_benevole["nb_inscriptions"] = row["nb_inscriptions"]
+                
+    return to_send
 
 
 # Function to auto assign flexibles to postes
@@ -184,3 +222,71 @@ async def auto_assign_flexibles_to_zones_benevoles():
     await db.execute(query)
         
     return {"message": "Successfully auto assigned flexibles to zones benevoles"}
+
+
+# Function to handle batch inscription and desinscription to postes
+async def batch_inscription_poste(user: User, batch_inscription: BatchInscriptionPoste):
+    
+    if len(batch_inscription.desinscriptions) > 0:
+        # Desinscriptions
+        desincriptions = batch_inscription.desinscriptions
+        
+        # Make a list of tuples of the desincriptions
+        desincriptions = [(user.user_id, inscription.poste, inscription.jour, inscription.creneau, True) for inscription in desincriptions]
+        
+        query = """
+        DELETE FROM inscriptions
+        WHERE user_id = $1 AND poste = $2 AND jour = $3 AND creneau = $4 AND is_poste = $5;
+        """
+        
+        await db.execute_many(query, desincriptions)
+        
+    if len(batch_inscription.inscriptions) > 0:
+        # Inscriptions
+        inscriptions = batch_inscription.inscriptions
+        
+        # Make a list of tuples of the inscriptions
+        inscriptions = [(user.user_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True) for inscription in inscriptions]
+        
+        query = """
+        INSERT INTO inscriptions (user_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+        """
+        
+        await db.execute_many(query, inscriptions)
+    
+    return {"message": "Successfully handled batch inscriptions and desinscriptions to postes"}
+
+
+# Function to handle batch inscription and desinscription to zones benevoles
+async def batch_inscription_zone_benevole(user: User, batch_inscription: BatchInscriptionZoneBenevole):
+    
+    if len(batch_inscription.desinscriptions) > 0:
+        # Desinscriptions
+        desincriptions = batch_inscription.desinscriptions
+        
+        # Make a list of tuples of the desincriptions
+        desincriptions = [(user.user_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False) for inscription in desincriptions]
+        
+        query = """
+        DELETE FROM inscriptions
+        WHERE user_id = $1 AND poste = $2 AND zone_plan = $3 AND zone_benevole_id = $4 AND zone_benevole_name = $5 AND jour = $6 AND creneau = $7 AND is_poste = $8;
+        """
+        
+        await db.execute_many(query, desincriptions)
+        
+    if len(batch_inscription.inscriptions) > 0:
+        # Inscriptions
+        inscriptions = batch_inscription.inscriptions
+        
+        # Make a list of tuples of the inscriptions
+        inscriptions = [(user.user_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False) for inscription in inscriptions]
+        
+        query = """
+        INSERT INTO inscriptions (user_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+        """
+        
+        await db.execute_many(query, inscriptions)
+    
+    return {"message": "Successfully handled batch inscriptions and desinscriptions to zones benevoles"}

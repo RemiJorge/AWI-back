@@ -9,10 +9,12 @@ from ..controllers.inscription_controller import (
     get_nb_inscriptions_poste, 
     get_nb_inscriptions_zone_benevole,
     auto_assign_flexibles_to_postes,
-    auto_assign_flexibles_to_zones_benevoles
+    auto_assign_flexibles_to_zones_benevoles,
+    batch_inscription_poste,
+    batch_inscription_zone_benevole
     )
 from ..models.user import User
-from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole
+from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole
 
 
 inscription_router = APIRouter(
@@ -59,3 +61,12 @@ async def auto_assign_flexibles_to_postes_route(user: Annotated[User, Security(v
 @inscription_router.put("/zone-benevole/auto-assign-flexibles", response_model=dict, description="Auto assign flexibles to zones benevoles")
 async def auto_assign_flexibles_to_zones_benevoles_route(user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
     return await auto_assign_flexibles_to_zones_benevoles()
+
+
+@inscription_router.post("/poste/batch-inscription", response_model=dict, description="Batch inscriptions and desinscriptions to postes")
+async def batch_inscription_poste_route(batch: BatchInscriptionPoste, user: Annotated[User, Security(verify_token, scopes=["User"])]):
+    await batch_inscription_poste(user,batch)
+    
+@inscription_router.post("/zone-benevole/batch-inscription", response_model=dict, description="Batch inscriptions and desinscriptions to zones benevoles")
+async def batch_inscription_zone_benevole_route(batch: BatchInscriptionZoneBenevole, user: Annotated[User, Security(verify_token, scopes=["User"])]):
+    await batch_inscription_zone_benevole(user,batch)

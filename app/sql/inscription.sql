@@ -76,6 +76,7 @@ BEGIN
                 zone_benevole_id,
                 zone_benevole_name
             FROM csv
+            WHERE a_animer = 'oui'
         );
 
     -- Create the new_zones CTE
@@ -88,7 +89,8 @@ BEGIN
         zone_benevole,
 		ROW_NUMBER() OVER(PARTITION BY zone_plan, zone_benevole_id, zone_benevole ORDER BY zone_benevole) as row_nb -- Technically not needed
     FROM csv
-    WHERE zone_plan IN (SELECT zone_plan FROM to_changeCTE);
+    WHERE zone_plan IN (SELECT zone_plan FROM to_changeCTE)
+    AND a_animer = 'oui';
 
     -- Iterate through the to_changeCTE result set and perform updates
 	-- Here we are performing an update for each row to be changed

@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
         print("main ERROR while connecting: ", e)
         exit(1)
     app.state.db = db
-    #await insert_test_data(db)
+    # await insert_test_data(db)
     yield
     # Executed on shutdown
     print("Shutdown")
@@ -97,36 +97,37 @@ async def insert_test_data(db):
 
     # Postes
     # Cas : Flexible sur 4 postes avec poste animation
-    await db.execute(query, user_id, "PosteTest1", "", "", "", "Lundi", "10h-12h", True)
-    await db.execute(query, user_id, "PosteTest2", "", "", "", "Lundi", "10h-12h", True)
-    await db.execute(query, user_id, "PosteTest3", "", "", "", "Lundi", "10h-12h", True)
-    await db.execute(query, user_id, "Animation", "", "", "", "Lundi", "10h-12h", True)
-    await db.execute(query, user_id, "PosteTest1", "", "", "", "Lundi", "12h-14h", True)
-    await db.execute(query, user_id, "PosteTest2", "", "", "", "Lundi", "12h-14h", True)
-    await db.execute(query, user_id, "PosteTest3", "", "", "", "Lundi", "12h-14h", True)
-    await db.execute(query, user_id, "Animation", "", "", "", "Lundi", "12h-14h", True)
+    await db.execute(query, user_id, "PosteTest1", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, "PosteTest2", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, "PosteTest3", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, "Animation", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, "PosteTest1", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, "PosteTest2", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, "PosteTest3", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, "Animation", "", "", "", "Samedi", "12h-14h", True)
 
     
     # Zones benevoles
+    # CONSIDER THESE TO BE DIFFERENT USERS BECAUSE YOU CAN'T BE FLEXIBLE ON ZONES BENEVOLES
     # Cas : Renommage zone benevoles et flexible
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Lundi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Lundi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Lundi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Lundi", "12h-14h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Lundi", "12h-14h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Samedi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Samedi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Samedi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Samedi", "12h-14h", False)
     # Cas : Tout va bien, zone plan sans zone benevole
-    await db.execute(query, user_id, "Animation", "Esplanade-Est 1", "179", "", "Lundi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Esplanade-Est 1", "179", "", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Esplanade-Centre 4", "179", "", "Samedi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Esplanade-Centre 4", "179", "", "Samedi", "12h-14h", False)
     # Cas : Tout va bien, zone plan avec zone benevole
-    await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Lundi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Samedi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Samedi", "12h-14h", False)
     # Cas : Split zone plan en plusieurs zones benevoles
-    await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Lundi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Lundi", "12h-14h", False)
+    await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Samedi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Samedi", "12h-14h", False)
     # Cas : suppression zone benevole
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Lundi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Lundi", "15h-17h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Samedi", "10h-12h", False)
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Samedi", "16h-18h", False)
     
     print("Inserted test data")
 
