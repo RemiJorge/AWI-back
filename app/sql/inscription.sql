@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS inscription;
+DROP TABLE IF EXISTS inscriptions;
 DROP TABLE IF EXISTS csv;
 DROP TABLE IF EXISTS postes;
 
