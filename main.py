@@ -125,6 +125,7 @@ async def insert_test_data(db):
     await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Lundi", "10h-12h", False)
     await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Lundi", "12h-14h", False)
     # Cas : suppression zone benevole
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Lundi", "10h-12h", False)
     await db.execute(query, user_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Lundi", "15h-17h", False)
     
     print("Inserted test data")

@@ -34,14 +34,14 @@ INSERT INTO roles (role_name) VALUES
 
 -- Example: Insert a user into the "users" table and associate them with a role
 -- Replace the password value with a hashed and salted password
-INSERT INTO users (username, password, email) VALUES
-    ('example_user', 'hashed_password', 'user@example.com');
+-- INSERT INTO users (username, password, email) VALUES
+--     ('example_user', 'hashed_password', 'user@example.com');
 
 -- Associate the user with a role (e.g., 'User' role)
-INSERT INTO user_roles (user_id, role_id)
-SELECT user_id, role_id
-FROM users, roles
-WHERE users.username = 'example_user' AND roles.role_name = 'User';
+-- INSERT INTO user_roles (user_id, role_id)
+-- SELECT user_id, role_id
+-- FROM users, roles
+-- WHERE users.username = 'example_user' AND roles.role_name = 'User';
 
 --Make a user have all roles
 -- INSERT INTO user_roles (user_id, role_id)
