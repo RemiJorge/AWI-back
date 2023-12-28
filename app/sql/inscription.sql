@@ -44,3 +44,86 @@ CREATE TABLE postes (
     description_poste TEXT,
     max_capacity INTEGER DEFAULT 10
 );
+
+
+CREATE OR REPLACE PROCEDURE update_inscriptions_animation_zones()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    row_record record;
+BEGIN
+    -- Drop the temporary tables
+    DROP TABLE IF EXISTS to_changeCTE;
+    DROP TABLE IF EXISTS new_zones;
+
+    -- Create the to_changeCTE
+	-- These are the inscriptions in which the combination 
+	-- zone_plan, zone_benevole_id, zone_benevole_name is not in the new csv table
+    CREATE TEMP TABLE to_changeCTE AS
+    SELECT 
+        user_id,
+        poste,
+        zone_plan,
+        zone_benevole_id,
+        zone_benevole_name,
+        jour,
+        creneau
+    FROM inscriptions
+    WHERE poste = 'Animation' AND is_poste = False
+        AND (zone_plan, zone_benevole_id, zone_benevole_name) NOT IN (
+            SELECT 
+                zone_plan,
+                zone_benevole_id,
+                zone_benevole_name
+            FROM csv
+        );
+
+    -- Create the new_zones CTE
+	-- Zones that will be needed for the updates
+	-- There will be duplicates in the table proportionally to the number of games in each zone_plan and zone_benevole_name
+    CREATE TEMP TABLE new_zones AS
+    SELECT
+        zone_plan,
+        zone_benevole_id,
+        zone_benevole,
+		ROW_NUMBER() OVER(PARTITION BY zone_plan, zone_benevole_id, zone_benevole ORDER BY zone_benevole) as row_nb -- Technically not needed
+    FROM csv
+    WHERE zone_plan IN (SELECT zone_plan FROM to_changeCTE);
+
+    -- Iterate through the to_changeCTE result set and perform updates
+	-- Here we are performing an update for each row to be changed
+    FOR row_record IN (SELECT * FROM to_changeCTE)
+    LOOP
+        UPDATE inscriptions AS i
+        SET 
+            zone_benevole_id = nz.zone_benevole_id,
+            zone_benevole_name = nz.zone_benevole
+        FROM ( -- Which row to update with
+			SELECT 
+				*
+			FROM new_zones
+			WHERE zone_plan = row_record.zone_plan -- Zone plan cannot have changed
+			ORDER BY RANDOM()
+			LIMIT 1
+		) as nz
+        WHERE -- Which row to update
+            i.user_id = row_record.user_id
+            AND i.jour = row_record.jour
+            AND i.creneau = row_record.creneau
+			AND i.zone_plan = row_record.zone_plan
+			AND i.zone_benevole_id = row_record.zone_benevole_id
+			AND i.zone_benevole_name = row_record.zone_benevole_name;
+    END LOOP;
+
+    -- Drop the temporary tables
+    DROP TABLE IF EXISTS to_changeCTE;
+    DROP TABLE IF EXISTS new_zones;
+END;
+$$;
+
+-- DROP TABLE IF EXISTS to_changeCTE;
+-- DROP TABLE IF EXISTS new_zones;
+
+-- CALL update_inscriptions_animation_zones();
+
+-- SELECT * FROM inscriptions;

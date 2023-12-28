@@ -20,6 +20,9 @@ async def refresh_csv_table(data: list):
 
     await db.insert_many("csv", data, columns)
     
+    # Call the function to check and resolve changes
+    await check_and_resolve_changes()
+    
     return {"message": "csv table refreshed"}
 
 # Function to get all games
@@ -36,5 +39,19 @@ async def get_games_info() -> list[Game]:
     return result
 
 
-#async def check_and_resolve_changes():
+# Function to check if there are changes in the csv file regarding the:
+# zone_benevole_id, zone_benevole
+# It accounts for: 
+# creation of new zone_benevole
+# splitting of a zone_plan into multiple zone_benevole
+# deletion of a zone_benevole
+# renaming of a zone_benevole
+async def check_and_resolve_changes():
+    query= """
+    CALL update_inscriptions_animation_zones();
+    """
+    
+    await db.execute(query)
+    
+    return {"message": "Changes checked and resolved"}
     

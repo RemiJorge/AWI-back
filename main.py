@@ -96,6 +96,7 @@ async def insert_test_data(db):
     """
 
     # Postes
+    # Cas : Flexible sur 4 postes avec poste animation
     await db.execute(query, user_id, "PosteTest1", "", "", "", "Lundi", "10h-12h", True)
     await db.execute(query, user_id, "PosteTest2", "", "", "", "Lundi", "10h-12h", True)
     await db.execute(query, user_id, "PosteTest3", "", "", "", "Lundi", "10h-12h", True)
@@ -107,18 +108,24 @@ async def insert_test_data(db):
 
     
     # Zones benevoles
+    # Cas : Renommage zone benevoles et flexible
     await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Lundi", "10h-12h", False)
     await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Lundi", "10h-12h", False)
     await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Lundi", "10h-12h", False)
     await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Lundi", "12h-14h", False)
     await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Lundi", "12h-14h", False)
     await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Lundi", "12h-14h", False)
+    # Cas : Tout va bien, zone plan sans zone benevole
     await db.execute(query, user_id, "Animation", "Esplanade-Est 1", "179", "", "Lundi", "10h-12h", False)
     await db.execute(query, user_id, "Animation", "Esplanade-Est 1", "179", "", "Lundi", "12h-14h", False)
+    # Cas : Tout va bien, zone plan avec zone benevole
     await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Lundi", "10h-12h", False)
     await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Lundi", "12h-14h", False)
+    # Cas : Split zone plan en plusieurs zones benevoles
     await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Lundi", "10h-12h", False)
     await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Lundi", "12h-14h", False)
+    # Cas : suppression zone benevole
+    await db.execute(query, user_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Lundi", "15h-17h", False)
     
     print("Inserted test data")
 
