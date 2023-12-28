@@ -12,3 +12,11 @@ class InscriptionZoneBenevole(BaseModel):
     zone_benevole_name: str = ""
     jour: str
     creneau: str
+
+class BatchInscriptionPoste(BaseModel):
+    inscriptions: list[InscriptionPoste]
+    desinscriptions: list[InscriptionPoste]
+    
+class BatchInscriptionZoneBenevole(BaseModel):
+    inscriptions: list[InscriptionZoneBenevole]
+    desinscriptions: list[InscriptionZoneBenevole]
