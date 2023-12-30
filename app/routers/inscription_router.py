@@ -65,8 +65,8 @@ async def auto_assign_flexibles_to_zones_benevoles_route(user: Annotated[User, S
 
 @inscription_router.post("/poste/batch-inscription", response_model=dict, description="Batch inscriptions and desinscriptions to postes")
 async def batch_inscription_poste_route(batch: BatchInscriptionPoste, user: Annotated[User, Security(verify_token, scopes=["User"])]):
-    await batch_inscription_poste(user,batch)
+    return await batch_inscription_poste(user,batch)
     
 @inscription_router.post("/zone-benevole/batch-inscription", response_model=dict, description="Batch inscriptions and desinscriptions to zones benevoles")
 async def batch_inscription_zone_benevole_route(batch: BatchInscriptionZoneBenevole, user: Annotated[User, Security(verify_token, scopes=["User"])]):
-    await batch_inscription_zone_benevole(user,batch)
+    return await batch_inscription_zone_benevole(user,batch)
