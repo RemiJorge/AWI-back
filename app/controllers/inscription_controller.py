@@ -290,3 +290,71 @@ async def batch_inscription_zone_benevole(user: User, batch_inscription: BatchIn
         await db.execute_many(query, inscriptions)
     
     return {"message": "Successfully handled batch inscriptions and desinscriptions to zones benevoles"}
+
+# Function to get the postes inscriptions of a user
+async def get_postes_inscriptions_user(user: User):
+    # First get all of the possible postes
+    query = """
+    SELECT poste
+    FROM postes;
+    """
+    
+    result = await db.fetch_rows(query)
+    
+    to_send = []
+    for jour in JOURS:
+        for creneau in CRENEAUX:
+            to_send += [{"poste": row["poste"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
+            
+    query = """
+    SELECT poste, jour, creneau, COUNT(*) AS nb_inscriptions
+    FROM inscriptions
+    WHERE is_poste = True AND user_id = $1
+    GROUP BY poste, jour, creneau
+    ORDER BY poste, jour, creneau;
+    """
+
+    result = await db.fetch_rows(query, user.user_id)
+    
+    # Update the nb_inscriptions for each poste
+    for row in result:
+        for poste in to_send:
+            if row["poste"] == poste["poste"] and row["jour"] == poste["jour"] and row["creneau"] == poste["creneau"]:
+                poste["nb_inscriptions"] = row["nb_inscriptions"]
+    
+    return to_send
+
+
+# Function to get the zones benevoles inscriptions of a user
+async def get_zones_benevoles_inscriptions_user(user: User):
+    # First get all of the possible zone benevoles
+    query = """
+    SELECT DISTINCT zone_plan, zone_benevole_id, zone_benevole
+    FROM csv
+    WHERE a_animer = 'oui';
+    """
+    
+    result = await db.fetch_rows(query)
+
+    to_send = []
+    for jour in JOURS:
+        for creneau in CRENEAUX:
+            to_send += [{"poste": "Animation", "zone_plan": row["zone_plan"], "zone_benevole_id": row["zone_benevole_id"], "zone_benevole_name": row["zone_benevole"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
+    
+    query = """
+    SELECT poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, COUNT(*) AS nb_inscriptions
+    FROM inscriptions
+    WHERE is_poste = False AND user_id = $1
+    GROUP BY poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau
+    ORDER BY poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau;
+    """
+
+    result = await db.fetch_rows(query, user.user_id)
+    
+    # Update the nb_inscriptions for each zone benevole
+    for row in result:
+        for zone_benevole in to_send:
+            if row["zone_plan"] == zone_benevole["zone_plan"] and row["zone_benevole_id"] == zone_benevole["zone_benevole_id"] and row["zone_benevole_name"] == zone_benevole["zone_benevole_name"] and row["jour"] == zone_benevole["jour"] and row["creneau"] == zone_benevole["creneau"]:
+                zone_benevole["nb_inscriptions"] = row["nb_inscriptions"]
+                
+    return to_send

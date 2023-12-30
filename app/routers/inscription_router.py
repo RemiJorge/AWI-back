@@ -11,7 +11,9 @@ from ..controllers.inscription_controller import (
     auto_assign_flexibles_to_postes,
     auto_assign_flexibles_to_zones_benevoles,
     batch_inscription_poste,
-    batch_inscription_zone_benevole
+    batch_inscription_zone_benevole,
+    get_postes_inscriptions_user,
+    get_zones_benevoles_inscriptions_user
     )
 from ..models.user import User
 from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole
@@ -44,12 +46,12 @@ async def desinscription_zone_benevole(inscription: InscriptionZoneBenevole, use
 
 
 @inscription_router.get("/poste", response_model=list, description="Get all inscriptions poste numbers by day and creneau")
-async def get_nb_inscriptions_poste_route(user: Annotated[User, Security(verify_token, scopes=["User"])]):
+async def get_nb_inscriptions_postes_route(user: Annotated[User, Security(verify_token, scopes=["User"])]):
     return await get_nb_inscriptions_poste()
 
 
 @inscription_router.get("/zone-benevole", response_model=list, description="Get all inscriptions zone benevole numbers by day and creneau")
-async def get_nb_inscriptions_zone_benevole_route(user: Annotated[User, Security(verify_token, scopes=["User"])]):
+async def get_nb_inscriptions_zone_benevoles_route(user: Annotated[User, Security(verify_token, scopes=["User"])]):
     return await get_nb_inscriptions_zone_benevole()
 
 
@@ -70,3 +72,11 @@ async def batch_inscription_poste_route(batch: BatchInscriptionPoste, user: Anno
 @inscription_router.post("/zone-benevole/batch-inscription", response_model=dict, description="Batch inscriptions and desinscriptions to zones benevoles")
 async def batch_inscription_zone_benevole_route(batch: BatchInscriptionZoneBenevole, user: Annotated[User, Security(verify_token, scopes=["User"])]):
     return await batch_inscription_zone_benevole(user,batch)
+
+@inscription_router.get("/poste/my-postes", response_model=list, description="Get my postes inscriptions")
+async def get_my_postes_inscriptions_route(user: Annotated[User, Security(verify_token, scopes=["User"])]):
+    return await get_postes_inscriptions_user(user)
+
+@inscription_router.get("/zone-benevole/my-zones-benevoles", response_model=list, description="Get my zones benevoles inscriptions")
+async def get_my_zones_benevoles_inscriptions_route(user: Annotated[User, Security(verify_token, scopes=["User"])]):
+    return await get_zones_benevoles_inscriptions_user(user)
