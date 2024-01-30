@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
         print("main ERROR while connecting: ", e)
         exit(1)
     app.state.db = db
-    # await insert_test_data(db)
+    await insert_test_data(db)
     yield
     # Executed on shutdown
     print("Shutdown")
@@ -70,64 +70,83 @@ async def insert_test_data(db):
     
     user_id = await db.fetch_val(query)
     
+    # Delete test festival and create it again
     query = """
-    DELETE FROM inscriptions WHERE user_id = $1;"""
-    
-    await db.execute(query, user_id)
-    
-    query = """
-    DELETE FROM postes;"""
+    DELETE FROM festivals WHERE festival_name = 'FestivalTest';"""
     
     await db.execute(query)
     
     query = """
-    INSERT INTO postes (poste, description_poste, max_capacity)
-    VALUES ($1, $2, $3);
-    """
+    INSERT INTO festivals (festival_name) VALUES ('FestivalTest');"""
     
-    await db.execute(query, "PosteTest1", "Description du poste 1", 2)
-    await db.execute(query, "PosteTest2", "Description du poste 2", 2)
-    await db.execute(query, "PosteTest3", "Description du poste 3", 2)
-    await db.execute(query, "Animation", "Description du poste Animation", 2)
+    await db.execute(query)
+    
+    # Select latest festival
+    query = """
+    SELECT festival_id FROM festivals WHERE festival_name = 'FestivalTest';"""
+    
+    festival_id = await db.fetch_val(query)
     
     query = """
-    INSERT INTO inscriptions (user_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+    DELETE FROM inscriptions WHERE user_id = $1 AND festival_id = $2;"""
+    
+    await db.execute(query, user_id, festival_id)
+    
+    query = """
+    DELETE FROM postes WHERE festival_id = $1;"""
+    
+    await db.execute(query, festival_id)
+    
+    query = """
+    INSERT INTO postes (festival_id, poste, description_poste, max_capacity)
+    VALUES ($1, $2, $3, $4);
+    """
+    
+    await db.execute(query, festival_id, "PosteTest1", "Description du poste 1", 2)
+    await db.execute(query, festival_id, "PosteTest2", "Description du poste 2", 2)
+    await db.execute(query, festival_id, "PosteTest3", "Description du poste 3", 2)
+    await db.execute(query, festival_id, "Animation", "Description du poste Animation", 2)
+    
+    query = """
+    INSERT INTO inscriptions (user_id, festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
     """
 
     # Postes
     # Cas : Flexible sur 4 postes avec poste animation
-    await db.execute(query, user_id, "PosteTest1", "", "", "", "Samedi", "10h-12h", True)
-    await db.execute(query, user_id, "PosteTest2", "", "", "", "Samedi", "10h-12h", True)
-    await db.execute(query, user_id, "PosteTest3", "", "", "", "Samedi", "10h-12h", True)
-    await db.execute(query, user_id, "Animation", "", "", "", "Samedi", "10h-12h", True)
-    await db.execute(query, user_id, "PosteTest1", "", "", "", "Samedi", "12h-14h", True)
-    await db.execute(query, user_id, "PosteTest2", "", "", "", "Samedi", "12h-14h", True)
-    await db.execute(query, user_id, "PosteTest3", "", "", "", "Samedi", "12h-14h", True)
-    await db.execute(query, user_id, "Animation", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, festival_id, "PosteTest1", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, festival_id, "PosteTest2", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, festival_id, "PosteTest3", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, festival_id, "Animation", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, festival_id, "PosteTest1", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, festival_id, "PosteTest2", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, festival_id, "PosteTest3", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, festival_id, "Animation", "", "", "", "Samedi", "12h-14h", True)
 
     
     # Zones benevoles
     # CONSIDER THESE TO BE DIFFERENT USERS BECAUSE YOU CAN'T BE FLEXIBLE ON ZONES BENEVOLES
+    # Note : I just fixed this, disregard the above comment
+    # (Might put two of the same zone benevole names when uploading new csv with renames or deletions)
     # Cas : Renommage zone benevoles et flexible
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Samedi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Samedi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Samedi", "12h-14h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "12h-14h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Samedi", "12h-14h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Vendredi", "10h-12h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "10h-12h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Dimanche", "10h-12h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Vendredi", "12h-14h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "12h-14h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Dimanche", "12h-14h", False)
     # Cas : Tout va bien, zone plan sans zone benevole
-    await db.execute(query, user_id, "Animation", "Esplanade-Centre 4", "179", "", "Samedi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Esplanade-Centre 4", "179", "", "Samedi", "12h-14h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Centre 4", "179", "", "Samedi", "8h-10h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Centre 4", "179", "", "Dimanche", "8h-10h", False)
     # Cas : Tout va bien, zone plan avec zone benevole
-    await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Samedi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Samedi", "12h-14h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Vendredi", "8h-10h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Dimanche", "16h-18h", False)
     # Cas : Split zone plan en plusieurs zones benevoles
-    await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Samedi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Esplanade-Ouest 3", "123", "", "Samedi", "12h-14h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Ouest 3", "123", "", "Samedi", "14h-16h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Ouest 3", "123", "", "Dimanche", "14h-16h", False)
     # Cas : suppression zone benevole
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Samedi", "10h-12h", False)
-    await db.execute(query, user_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Samedi", "16h-18h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Dimanche", "16h-18h", False)
+    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Samedi", "16h-18h", False)
     
     print("Inserted test data")
 

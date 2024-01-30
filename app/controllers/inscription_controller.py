@@ -7,77 +7,93 @@ db = get_db()
 
 JOURS = ["Vendredi", "Samedi", "Dimanche"]
 CRENEAUX = ["8h-10h", "10h-12h", "12h-14h", "14h-16h", "16h-18h"]
+INSERT_QUERY = """
+    INSERT INTO inscriptions (user_id, festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ON CONFLICT (user_id, festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste) DO NOTHING;
+    """
+DELETE_QUERY = """
+    DELETE FROM inscriptions
+    WHERE user_id = $1 AND poste = $2 AND zone_plan = $3 AND zone_benevole_id = $4 AND zone_benevole_name = $5 AND jour = $6 AND creneau = $7 AND is_poste = $8 AND is_active = True;
+    """
+SELECT_POSTES_QUERY = """
+    SELECT festival_id, poste
+    FROM postes
+    WHERE is_active = True;
+    """
+SELECT_NB_INS_POSTES_QUERY = """
+    SELECT festival_id, poste, jour, creneau, COUNT(*) AS nb_inscriptions
+    FROM inscriptions
+    WHERE is_poste = True AND is_active = True AND CUSTOM_FILTER
+    GROUP BY festival_id, poste, jour, creneau
+    ORDER BY festival_id, poste, jour, creneau;
+    """
+NO_FILTER = """ 1 = 1 """
+USER_FILTER = """ user_id = $1 """
+
+SELECT_ZONES_BENEVOLES_QUERY = """
+    SELECT DISTINCT zone_plan, zone_benevole_id, zone_benevole
+    FROM csv
+    WHERE a_animer = 'oui';
+    """
+SELECT_NB_INS_ZONES_BENEVOLES_QUERY = """
+    SELECT festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, COUNT(*) AS nb_inscriptions
+    FROM inscriptions
+    WHERE is_poste = False AND is_active = True AND CUSTOM_FILTER
+    GROUP BY festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau
+    ORDER BY festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau;
+    """
+
+
+
 
 # Function to sign up to a "poste"
 async def inscription_user_poste(user: User, inscription: InscriptionPoste):
-    query = """
-    INSERT INTO inscriptions (user_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-    """
+    query = INSERT_QUERY
 
-    result = await db.execute(query, user.user_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True)
+    result = await db.execute(query, user.user_id, inscription.festival_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True)
     
-    if result != "INSERT 0 1":
-        return HTTPException(status_code=500, detail="Error while signing up to poste")
-
     return {"message": "Successfully signed up to poste"}
 
 # Function to sign up to a "zone benevole"
 async def inscription_user_zone_benevole(user: User, inscription: InscriptionZoneBenevole):
-    query = """
-    INSERT INTO inscriptions (user_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-    """
+    query = INSERT_QUERY
 
-    result = await db.execute(query, user.user_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False)
+    result = await db.execute(query, user.user_id, inscription.festival_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False)
 
     return {"message": "Successfully signed up to zone benevole"}
 
 # Function to remove an inscription from a "poste"
 async def desinscription_user_poste(user: User, inscription: InscriptionPoste):
-    query = """
-    DELETE FROM inscriptions
-    WHERE user_id = $1 AND poste = $2 AND jour = $3 AND creneau = $4 AND is_poste = $5;
-    """
+    query = DELETE_QUERY
 
-    result = await db.execute(query, user.user_id, inscription.poste, inscription.jour, inscription.creneau, True)
+    result = await db.execute(query, user.user_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True)
 
     return {"message": "Successfully removed inscription from poste"}
 
 # Function to remove an inscription from a "zone benevole"
 async def desinscription_user_zone_benevole(user: User, inscription: InscriptionZoneBenevole):
-    query = """
-    DELETE FROM inscriptions
-    WHERE user_id = $1 AND poste = $2 AND zone_plan = $3 AND zone_benevole_id = $4 AND zone_benevole_name = $5 AND jour = $6 AND creneau = $7 AND is_poste = $8;
-    """
+    query = DELETE_QUERY
 
     result = await db.execute(query, user.user_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False)
 
     return {"message": "Successfully removed inscription from zone benevole"}
 
 
-# Function that returns the number of inscriptions for a given poste by day and creneau
+# Function that returns the number of inscriptions for all postes by day and creneau
 async def get_nb_inscriptions_poste():
     # First get all of the possible postes
-    query = """
-    SELECT poste
-    FROM postes;
-    """
+    query = SELECT_POSTES_QUERY
     
     result = await db.fetch_rows(query)
     
     to_send = []
     for jour in JOURS:
         for creneau in CRENEAUX:
-            to_send += [{"poste": row["poste"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
+            to_send += [{"festival_id": row["festival_id"], "poste": row["poste"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
     
-    query = """
-    SELECT poste, jour, creneau, COUNT(*) AS nb_inscriptions
-    FROM inscriptions
-    WHERE is_poste = True
-    GROUP BY poste, jour, creneau
-    ORDER BY poste, jour, creneau;
-    """
+    filter = NO_FILTER
+    query = SELECT_NB_INS_POSTES_QUERY.replace("CUSTOM_FILTER", filter)
 
     result = await db.fetch_rows(query)
     
@@ -89,14 +105,10 @@ async def get_nb_inscriptions_poste():
     
     return to_send
 
-# Function that returns the number of inscriptions for a given zone benevole by day and creneau
+# Function that returns the number of inscriptions for all zones benevoles by day and creneau
 async def get_nb_inscriptions_zone_benevole():
     # First get all of the possible zone benevoles
-    query = """
-    SELECT DISTINCT zone_plan, zone_benevole_id, zone_benevole
-    FROM csv
-    WHERE a_animer = 'oui';
-    """
+    query = SELECT_ZONES_BENEVOLES_QUERY
     
     result = await db.fetch_rows(query)
 
@@ -105,13 +117,8 @@ async def get_nb_inscriptions_zone_benevole():
         for creneau in CRENEAUX:
             to_send += [{"poste": "Animation", "zone_plan": row["zone_plan"], "zone_benevole_id": row["zone_benevole_id"], "zone_benevole_name": row["zone_benevole"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
     
-    query = """
-    SELECT poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, COUNT(*) AS nb_inscriptions
-    FROM inscriptions
-    WHERE is_poste = False
-    GROUP BY poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau
-    ORDER BY poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau;
-    """
+    filter = NO_FILTER
+    query = SELECT_NB_INS_ZONES_BENEVOLES_QUERY.replace("CUSTOM_FILTER", filter)
 
     result = await db.fetch_rows(query)
     
@@ -232,12 +239,9 @@ async def batch_inscription_poste(user: User, batch_inscription: BatchInscriptio
         desincriptions = batch_inscription.desinscriptions
         
         # Make a list of tuples of the desincriptions
-        desincriptions = [(user.user_id, inscription.poste, inscription.jour, inscription.creneau, True) for inscription in desincriptions]
+        desincriptions = [(user.user_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True) for inscription in desincriptions]
         
-        query = """
-        DELETE FROM inscriptions
-        WHERE user_id = $1 AND poste = $2 AND jour = $3 AND creneau = $4 AND is_poste = $5;
-        """
+        query = DELETE_QUERY
         
         await db.execute_many(query, desincriptions)
         
@@ -248,10 +252,7 @@ async def batch_inscription_poste(user: User, batch_inscription: BatchInscriptio
         # Make a list of tuples of the inscriptions
         inscriptions = [(user.user_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True) for inscription in inscriptions]
         
-        query = """
-        INSERT INTO inscriptions (user_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-        """
+        query = INSERT_QUERY
         
         await db.execute_many(query, inscriptions)
     
@@ -268,10 +269,7 @@ async def batch_inscription_zone_benevole(user: User, batch_inscription: BatchIn
         # Make a list of tuples of the desincriptions
         desincriptions = [(user.user_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False) for inscription in desincriptions]
         
-        query = """
-        DELETE FROM inscriptions
-        WHERE user_id = $1 AND poste = $2 AND zone_plan = $3 AND zone_benevole_id = $4 AND zone_benevole_name = $5 AND jour = $6 AND creneau = $7 AND is_poste = $8;
-        """
+        query = DELETE_QUERY
         
         await db.execute_many(query, desincriptions)
         
@@ -282,10 +280,7 @@ async def batch_inscription_zone_benevole(user: User, batch_inscription: BatchIn
         # Make a list of tuples of the inscriptions
         inscriptions = [(user.user_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False) for inscription in inscriptions]
         
-        query = """
-        INSERT INTO inscriptions (user_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
-        """
+        query = INSERT_QUERY
         
         await db.execute_many(query, inscriptions)
     
@@ -294,25 +289,17 @@ async def batch_inscription_zone_benevole(user: User, batch_inscription: BatchIn
 # Function to get the postes inscriptions of a user
 async def get_postes_inscriptions_user(user: User):
     # First get all of the possible postes
-    query = """
-    SELECT poste
-    FROM postes;
-    """
+    query = SELECT_POSTES_QUERY
     
     result = await db.fetch_rows(query)
     
     to_send = []
     for jour in JOURS:
         for creneau in CRENEAUX:
-            to_send += [{"poste": row["poste"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
-            
-    query = """
-    SELECT poste, jour, creneau, COUNT(*) AS nb_inscriptions
-    FROM inscriptions
-    WHERE is_poste = True AND user_id = $1
-    GROUP BY poste, jour, creneau
-    ORDER BY poste, jour, creneau;
-    """
+            to_send += [{"festival_id": row["festival_id"], "poste": row["poste"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
+    
+    filter = USER_FILTER
+    query = SELECT_NB_INS_POSTES_QUERY.replace("CUSTOM_FILTER", filter)
 
     result = await db.fetch_rows(query, user.user_id)
     
@@ -328,11 +315,7 @@ async def get_postes_inscriptions_user(user: User):
 # Function to get the zones benevoles inscriptions of a user
 async def get_zones_benevoles_inscriptions_user(user: User):
     # First get all of the possible zone benevoles
-    query = """
-    SELECT DISTINCT zone_plan, zone_benevole_id, zone_benevole
-    FROM csv
-    WHERE a_animer = 'oui';
-    """
+    query = SELECT_ZONES_BENEVOLES_QUERY
     
     result = await db.fetch_rows(query)
 
@@ -341,13 +324,8 @@ async def get_zones_benevoles_inscriptions_user(user: User):
         for creneau in CRENEAUX:
             to_send += [{"poste": "Animation", "zone_plan": row["zone_plan"], "zone_benevole_id": row["zone_benevole_id"], "zone_benevole_name": row["zone_benevole"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0} for row in result]
     
-    query = """
-    SELECT poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, COUNT(*) AS nb_inscriptions
-    FROM inscriptions
-    WHERE is_poste = False AND user_id = $1
-    GROUP BY poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau
-    ORDER BY poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau;
-    """
+    filter = USER_FILTER
+    query = SELECT_NB_INS_ZONES_BENEVOLES_QUERY.replace("CUSTOM_FILTER", filter)
 
     result = await db.fetch_rows(query, user.user_id)
     

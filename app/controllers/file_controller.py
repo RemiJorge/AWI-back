@@ -42,10 +42,15 @@ async def get_games_info() -> list[Game]:
 # Function to check if there are changes in the csv file regarding the:
 # zone_benevole_id, zone_benevole
 # It accounts for: 
-# creation of new zone_benevole
+# creation of new zone_benevole (should not have effects on inscriptions as it did not exist before)
 # splitting of a zone_plan into multiple zone_benevole
 # deletion of a zone_benevole
 # renaming of a zone_benevole
+# creating a new zone_plan (should not have effects on inscriptions as it did not exist before)
+
+# It does NOT account for:
+# renaming of a zone_plan
+# deletion of a zone_plan
 async def check_and_resolve_changes():
     query= """
     CALL update_inscriptions_animation_zones();
