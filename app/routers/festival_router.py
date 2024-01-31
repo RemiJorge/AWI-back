@@ -27,7 +27,7 @@ async def get_all_festivals_route(user: Annotated[User, Security(verify_token, s
 async def delete_festival_route(festival: Festival, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
     return await delete_festival(festival)
 
-@festival_router.post("/activate", response_model=dict, description="Activate a festival")
+@festival_router.put("/activate", response_model=dict, description="Activate a festival")
 async def activate_festival_route(festival: Festival, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
     return await activate_festival(festival)
 
