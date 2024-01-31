@@ -250,7 +250,7 @@ async def batch_inscription_poste(user: User, batch_inscription: BatchInscriptio
         inscriptions = batch_inscription.inscriptions
         
         # Make a list of tuples of the inscriptions
-        inscriptions = [(user.user_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True) for inscription in inscriptions]
+        inscriptions = [(user.user_id, inscription.festival_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True) for inscription in inscriptions]
         
         query = INSERT_QUERY
         
@@ -278,7 +278,7 @@ async def batch_inscription_zone_benevole(user: User, batch_inscription: BatchIn
         inscriptions = batch_inscription.inscriptions
         
         # Make a list of tuples of the inscriptions
-        inscriptions = [(user.user_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False) for inscription in inscriptions]
+        inscriptions = [(user.user_id, inscription.festival_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, inscription.jour, inscription.creneau, False) for inscription in inscriptions]
         
         query = INSERT_QUERY
         
