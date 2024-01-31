@@ -106,7 +106,7 @@ async def login_check_user_and_password(username: str, password: str, response: 
     )
 
     # Return the user and the access token
-    payload = UserAndToken(username=user.username, roles=user.roles, access_token=access_token, token_type="bearer")
+    payload = UserAndToken(user_id=user.user_id, username=user.username, roles=user.roles, access_token=access_token, token_type="bearer")
 
     return payload
 
@@ -149,7 +149,7 @@ async def check_refresh_token_and_create_access_token(refresh_token: str | None 
     )
 
     # Return the user and the access token
-    payload = UserAndToken(username=user.username, roles=user.roles, access_token=access_token, token_type="bearer")
+    payload = UserAndToken(user_id=user.user_id, username=user.username, roles=user.roles, access_token=access_token, token_type="bearer")
     
     return payload
 

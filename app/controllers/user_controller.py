@@ -93,6 +93,42 @@ async def find_user_by_email(email: str) -> User:
         )
     return user
 
+# Function to get the user from the database using the user_id
+async def find_user_by_user_id(user_id: int) -> User:
+    query = """
+    SELECT
+        u.user_id,
+        u.username,
+        u.email,
+        u.password,
+        u.disabled,
+        array_agg(r.role_name) AS roles
+    FROM
+        users u
+    JOIN
+        user_roles ur ON u.user_id = ur.user_id
+    JOIN
+        roles r ON ur.role_id = r.role_id
+    WHERE
+        u.user_id = $1
+    GROUP BY
+        u.user_id, u.username, u.email;
+    """
+    result = await db.fetch_row(query, user_id)
+    if result is None:
+        return None
+    user_dict = dict(result)
+    user = User(
+        user_id=user_dict["user_id"],
+        username=user_dict["username"],
+        email=user_dict["email"],
+        name=user_dict["username"], 
+        disabled=user_dict["disabled"], 
+        password=user_dict["password"], 
+        roles=user_dict["roles"]
+        )
+    return user
+
 
 # Function that returns the role ids of the roles passed in parameter
 async def get_role_ids(roles: list[str]) -> list[int]:
@@ -109,10 +145,10 @@ async def get_role_ids(roles: list[str]) -> list[int]:
     return role_ids
     
     
-# Ban user by username
-async def ban_user_by_username(username: str):
+# Ban user by user_id
+async def ban_user_by_user_id(user_id: int):
     query = """
-    UPDATE users SET disabled = true WHERE username = $1;
+    UPDATE users SET disabled = true WHERE user_id = $1;
     """
-    await db.execute(query, username)
+    await db.execute(query, user_id)
     return { "message": "User successfully banned" }

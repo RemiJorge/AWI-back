@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class UserAndToken(BaseModel):
+    user_id: int
     username: str
     roles: list[str]
     access_token : str
