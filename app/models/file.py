@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class Game(BaseModel):
+    festival_id: int
     jeu_id: int
     nom_du_jeu: str
     auteur: str

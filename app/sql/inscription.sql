@@ -6,7 +6,9 @@ DROP TABLE IF EXISTS festivals;
 CREATE TABLE festivals (
     festival_id SERIAL PRIMARY KEY,
     festival_name VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE
+    festival_description VARCHAR(255),
+    is_active BOOLEAN DEFAULT FALSE,
+    UNIQUE (festival_name)
 );
 
 CREATE TABLE inscriptions (
@@ -26,6 +28,7 @@ CREATE TABLE inscriptions (
 
 CREATE TABLE csv (
     poste VARCHAR(255) DEFAULT 'Animation',
+    festival_id INTEGER REFERENCES festivals(festival_id) ON DELETE CASCADE,
     jeu_id VARCHAR(255),
     nom_du_jeu VARCHAR(255),
     auteur VARCHAR(255),
@@ -47,7 +50,8 @@ CREATE TABLE csv (
     image_jeu VARCHAR(500),
     logo VARCHAR(500),
     video VARCHAR(255),
-    from_csv BOOLEAN DEFAULT TRUE
+    from_csv BOOLEAN DEFAULT TRUE,
+    is_active BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE postes (
@@ -82,14 +86,14 @@ BEGIN
         jour,
         creneau
     FROM inscriptions
-    WHERE poste = 'Animation' AND is_poste = False
+    WHERE poste = 'Animation' AND is_poste = False AND is_active = True
         AND (zone_plan, zone_benevole_id, zone_benevole_name) NOT IN (
             SELECT 
                 zone_plan,
                 zone_benevole_id,
                 zone_benevole_name
             FROM csv
-            WHERE a_animer = 'oui'
+            WHERE a_animer = 'oui' AND is_active = True
         );
 
     -- Create the new_zones CTE
@@ -103,7 +107,7 @@ BEGIN
 		ROW_NUMBER() OVER(PARTITION BY zone_plan, zone_benevole_id, zone_benevole ORDER BY zone_benevole) as row_nb -- Technically not needed
     FROM csv
     WHERE zone_plan IN (SELECT zone_plan FROM to_changeCTE)
-    AND a_animer = 'oui';
+    AND a_animer = 'oui' AND is_active = True;
 
     -- Iterate through the to_changeCTE result set and perform updates
 	-- Here we are performing an update for each row to be changed
@@ -127,7 +131,8 @@ BEGIN
             AND i.creneau = row_record.creneau
 			AND i.zone_plan = row_record.zone_plan
 			AND i.zone_benevole_id = row_record.zone_benevole_id
-			AND i.zone_benevole_name = row_record.zone_benevole_name;
+			AND i.zone_benevole_name = row_record.zone_benevole_name
+            AND i.is_active = True;
     END LOOP;
 
     -- Drop the temporary tables

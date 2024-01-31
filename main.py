@@ -55,12 +55,14 @@ from app.routers.auth_router import auth_router
 from app.routers.items_router import item_router
 from app.routers.file_router import file_router
 from app.routers.inscription_router import inscription_router
+from app.routers.festival_router import festival_router
 
 app.include_router(user_router)
 app.include_router(auth_router)
 #app.include_router(item_router)
 app.include_router(file_router)
 app.include_router(inscription_router)
+app.include_router(festival_router)
 
 
 async def insert_test_data(db):
@@ -77,39 +79,68 @@ async def insert_test_data(db):
     await db.execute(query)
     
     query = """
-    INSERT INTO festivals (festival_name) VALUES ('FestivalTest');"""
+    INSERT INTO festivals (festival_name, festival_description, is_active) VALUES ('FestivalTest', 'desc', True);"""
     
     await db.execute(query)
     
-    # Select latest festival
+    # Do it again for another festival
+    query = """
+    DELETE FROM festivals WHERE festival_name = 'FestivalTest2';"""
+    
+    await db.execute(query)
+    
+    query = """
+    INSERT INTO festivals (festival_name, festival_description) VALUES ('FestivalTest2', 'desc');"""
+    
+    await db.execute(query)
+    
+    # Select a festival
     query = """
     SELECT festival_id FROM festivals WHERE festival_name = 'FestivalTest';"""
     
     festival_id = await db.fetch_val(query)
     
+    # Select another festival
     query = """
-    DELETE FROM inscriptions WHERE user_id = $1 AND festival_id = $2;"""
+    SELECT festival_id FROM festivals WHERE festival_name = 'FestivalTest2';"""
     
-    await db.execute(query, user_id, festival_id)
+    festival_id2 = await db.fetch_val(query)
     
     query = """
-    DELETE FROM postes WHERE festival_id = $1;"""
+    DELETE FROM inscriptions WHERE user_id = $1 AND (festival_id = $2 OR festival_id = $3);"""
     
-    await db.execute(query, festival_id)
+    await db.execute(query, user_id, festival_id, festival_id2)
+    
+    query = """
+    DELETE FROM postes WHERE festival_id = $1 OR festival_id = $2;"""
+    
+    await db.execute(query, festival_id, festival_id2)
     
     query = """
     INSERT INTO postes (festival_id, poste, description_poste, max_capacity)
     VALUES ($1, $2, $3, $4);
     """
     
+    # For the festival FestivalTest
     await db.execute(query, festival_id, "PosteTest1", "Description du poste 1", 2)
     await db.execute(query, festival_id, "PosteTest2", "Description du poste 2", 2)
     await db.execute(query, festival_id, "PosteTest3", "Description du poste 3", 2)
     await db.execute(query, festival_id, "Animation", "Description du poste Animation", 2)
     
+    # For the festival FestivalTest2
+    await db.execute(query, festival_id2, "PosteTest1", "Description du poste 1", 2)
+    await db.execute(query, festival_id2, "PosteTest2", "Description du poste 2", 2)
+    await db.execute(query, festival_id2, "PosteTest3", "Description du poste 3", 2)
+    await db.execute(query, festival_id2, "Animation", "Description du poste Animation", 2)
+    
     query = """
     INSERT INTO inscriptions (user_id, festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+    """
+    
+    query2 = """
+    INSERT INTO inscriptions (user_id, festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste, is_active)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
     """
 
     # Postes
@@ -122,7 +153,9 @@ async def insert_test_data(db):
     await db.execute(query, user_id, festival_id, "PosteTest2", "", "", "", "Samedi", "12h-14h", True)
     await db.execute(query, user_id, festival_id, "PosteTest3", "", "", "", "Samedi", "12h-14h", True)
     await db.execute(query, user_id, festival_id, "Animation", "", "", "", "Samedi", "12h-14h", True)
-
+    
+    # For the festival FestivalTest2
+    await db.execute(query2, user_id, festival_id2, "PosteTest1", "", "", "", "Vendredi", "8h-10h", True, False)
     
     # Zones benevoles
     # CONSIDER THESE TO BE DIFFERENT USERS BECAUSE YOU CAN'T BE FLEXIBLE ON ZONES BENEVOLES

@@ -6,12 +6,22 @@ db = get_db()
 # Function to refresh the csv table
 async def refresh_csv_table(data: list):
     # Delete all the rows in the table
-    query = "DELETE FROM csv;"
+    query = "DELETE FROM csv WHERE is_active = TRUE;"
     await db.execute(query)
+    
+    # Get the active festival
+    query = """
+    SELECT festival_id FROM festivals WHERE is_active = TRUE;"""
+    
+    festival_id = await db.fetch_val(query)
+    
+    # Add the festival_id to the data
+    for row in data:
+        row.insert(0, festival_id)
 
     # Insert all the rows
     columns = [
-        "jeu_id", "nom_du_jeu", "auteur", "editeur",
+        "festival_id", "jeu_id", "nom_du_jeu", "auteur", "editeur",
         "nb_joueurs", "age_min", "duree", "type_jeu", "notice",
         "zone_plan", "zone_benevole", "zone_benevole_id", "a_animer",
         "recu", "mecanismes", "themes", "tags", "description",
@@ -29,7 +39,8 @@ async def refresh_csv_table(data: list):
 async def get_games_info() -> list[Game]:
     query = """
     SELECT * 
-    FROM csv;
+    FROM csv
+    WHERE is_active = TRUE;
     """
     
     result = await db.fetch_rows(query)

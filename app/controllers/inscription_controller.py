@@ -34,7 +34,8 @@ USER_FILTER = """ user_id = $1 """
 SELECT_ZONES_BENEVOLES_QUERY = """
     SELECT DISTINCT zone_plan, zone_benevole_id, zone_benevole
     FROM csv
-    WHERE a_animer = 'oui';
+    WHERE a_animer = 'oui'
+    AND is_active = True;
     """
 SELECT_NB_INS_ZONES_BENEVOLES_QUERY = """
     SELECT festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, COUNT(*) AS nb_inscriptions
@@ -150,6 +151,7 @@ async def auto_assign_flexibles_to_postes():
             inscriptions
         WHERE
             is_poste = True
+            AND is_active = True
         )
     DELETE FROM
         inscriptions
@@ -164,7 +166,7 @@ async def auto_assign_flexibles_to_postes():
                 DuplicateCTE
             WHERE
                 row_num > 1
-        ) AND is_poste = True)
+        ) AND is_poste = True AND is_active = True)
     OR
         (poste = 'Animation' AND (user_id, jour, creneau) IN (
             SELECT
@@ -175,7 +177,7 @@ async def auto_assign_flexibles_to_postes():
                 DuplicateCTE
             WHERE
                 poste = 'Animation' AND row_num > 1
-        ) AND is_poste = False);
+        ) AND is_poste = False AND is_active = True);
     """
     
     await db.execute(query)
@@ -207,6 +209,7 @@ async def auto_assign_flexibles_to_zones_benevoles():
         WHERE
             is_poste = False
             AND poste = 'Animation'
+            AND is_active = True
         )
         DELETE FROM
         inscriptions
@@ -224,7 +227,7 @@ async def auto_assign_flexibles_to_zones_benevoles():
                 DuplicateCTE
             WHERE
                 row_num > 1
-        ) AND is_poste = False;"""
+        ) AND is_poste = False AND is_active = True;"""
         
     await db.execute(query)
         
