@@ -152,3 +152,43 @@ async def ban_user_by_user_id(user_id: int):
     """
     await db.execute(query, user_id)
     return { "message": "User successfully banned" }
+
+
+# Get all users with pagination
+async def get_all_users(page: int, limit: int):
+    query = """
+    SELECT
+        u.user_id,
+        u.username,
+        u.email,
+        u.password,
+        u.disabled,
+        array_agg(r.role_name) AS roles
+    FROM
+        users u
+    JOIN
+        user_roles ur ON u.user_id = ur.user_id
+    JOIN
+        roles r ON ur.role_id = r.role_id
+    GROUP BY
+        u.user_id, u.username, u.email
+    ORDER BY
+        u.user_id
+    LIMIT $1 OFFSET $2;
+    """
+    offset = (page - 1) * limit
+    result = await db.fetch_rows(query, limit, offset)
+    users = []
+    for row in result:
+        user_dict = dict(row)
+        user = User(
+            user_id=user_dict["user_id"],
+            username=user_dict["username"],
+            email=user_dict["email"],
+            name=user_dict["username"], 
+            disabled=user_dict["disabled"], 
+            password=user_dict["password"], 
+            roles=user_dict["roles"]
+            )
+        users.append(user)
+    return users
