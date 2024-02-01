@@ -121,6 +121,11 @@ async def insert_test_data(db):
     VALUES ($1, $2, $3, $4);
     """
     
+    query2 = """
+    INSERT INTO postes (festival_id, poste, description_poste, max_capacity, is_active)
+    VALUES ($1, $2, $3, $4, $5);
+    """
+    
     # For the festival FestivalTest
     await db.execute(query, festival_id, "PosteTest1", "Description du poste 1", 2)
     await db.execute(query, festival_id, "PosteTest2", "Description du poste 2", 2)
@@ -128,10 +133,10 @@ async def insert_test_data(db):
     await db.execute(query, festival_id, "Animation", "Description du poste Animation", 2)
     
     # For the festival FestivalTest2
-    await db.execute(query, festival_id2, "PosteTest1", "Description du poste 1", 2)
-    await db.execute(query, festival_id2, "PosteTest2", "Description du poste 2", 2)
-    await db.execute(query, festival_id2, "PosteTest3", "Description du poste 3", 2)
-    await db.execute(query, festival_id2, "Animation", "Description du poste Animation", 2)
+    await db.execute(query2, festival_id2, "PosteTest1", "Description du poste 1", 2, False)
+    await db.execute(query2, festival_id2, "PosteTest2", "Description du poste 2", 2, False)
+    await db.execute(query2, festival_id2, "PosteTest3", "Description du poste 3", 2, False)
+    await db.execute(query2, festival_id2, "Animation", "Description du poste Animation", 2, False)
     
     query = """
     INSERT INTO inscriptions (user_id, festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
