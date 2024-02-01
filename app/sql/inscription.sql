@@ -56,10 +56,12 @@ CREATE TABLE csv (
 
 CREATE TABLE postes (
     festival_id INTEGER REFERENCES festivals(festival_id) ON DELETE CASCADE,
+    poste_id SERIAL PRIMARY KEY,
     poste VARCHAR(255),
     description_poste TEXT,
     max_capacity INTEGER DEFAULT 10,
-    is_active BOOLEAN DEFAULT TRUE
+    is_active BOOLEAN DEFAULT TRUE,
+    UNIQUE (festival_id, poste)
 );
 
 

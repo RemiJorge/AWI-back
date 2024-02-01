@@ -56,6 +56,8 @@ from app.routers.items_router import item_router
 from app.routers.file_router import file_router
 from app.routers.inscription_router import inscription_router
 from app.routers.festival_router import festival_router
+from app.routers.referent_router import referent_router
+from app.routers.poste_router import poste_router
 
 app.include_router(user_router)
 app.include_router(auth_router)
@@ -63,6 +65,8 @@ app.include_router(auth_router)
 app.include_router(file_router)
 app.include_router(inscription_router)
 app.include_router(festival_router)
+app.include_router(referent_router)
+app.include_router(poste_router)
 
 
 async def insert_test_data(db):
@@ -185,6 +189,21 @@ async def insert_test_data(db):
     # Cas : suppression zone benevole
     await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Dimanche", "16h-18h", False)
     await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Samedi", "16h-18h", False)
+    
+    
+    # Assign a referent to a poste
+    query = """
+    INSERT INTO referents (user_id, poste_id, festival_id)
+    VALUES ($1, $2, $3);"""
+    
+    # Get poste_id of the poste PosteTest1
+    query2 = """
+    SELECT poste_id FROM postes WHERE poste = 'PosteTest1' AND festival_id = $1;"""
+    
+    poste_id = await db.fetch_val(query2, festival_id)
+    
+    await db.execute(query, user_id, poste_id, festival_id)
+    
     
     print("Inserted test data")
 

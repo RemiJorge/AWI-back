@@ -37,81 +37,121 @@ async def get_all_festivals():
     return to_send
 
 # Function to delete a festival
-async def delete_festival(festival: Festival):
+async def delete_festival(festival_id: int):
 
     query = """
     DELETE FROM festivals 
     WHERE festival_id = $1;"""
 
-    result = await db.execute(query, festival.festival_id)
+    result = await db.execute(query, festival_id)
 
     return { "message" :"Festival deleted successfully" }
 
 # Function to activate a festival
-async def activate_festival(festival: Festival):
+async def activate_festival(festival_id: int, is_active: bool):
+    
+    # Check that there is no active festival
+    query = """
+    SELECT
+        festival_id
+    FROM festivals
+    WHERE is_active = TRUE;"""
+    
+    result = await db.fetch_row(query)
+    
+    if is_active == True:
+        if result is not None:
+            return { "message" :"There is already an active festival" }
+    else:
+        if result is None:
+            return { "message" :"There is no active festival" }
+        if result["festival_id"] != festival_id:
+            return { "message" :"The festival you want to deactivate is not the active festival" }
 
-    # Deactivate all inscriptions
-    query = """
-    UPDATE inscriptions
-    SET is_active = FALSE
-    WHERE is_active = TRUE;"""
+    if is_active == False:
+        # Deactivate all inscriptions
+        query = """
+        UPDATE inscriptions
+        SET is_active = FALSE
+        WHERE is_active = TRUE;"""
+        
+        result = await db.execute(query)
+        
+        # Deactivate all postes
+        query = """
+        UPDATE postes
+        SET is_active = FALSE
+        WHERE is_active = TRUE;"""
+        
+        result = await db.execute(query)
+        
+        # Deactivate all csv (zones benevoles and games)
+        query = """
+        UPDATE csv
+        SET is_active = FALSE
+        WHERE is_active = TRUE;"""
+        
+        result = await db.execute(query)
+        
+        # Deactivate all festivals
+        query = """
+        UPDATE festivals
+        SET is_active = FALSE
+        WHERE is_active = TRUE;"""
+        
+        result = await db.execute(query)
     
-    result = await db.execute(query)
+    if is_active == True:
+        # Activate inscriptions for the festival
+        query = """
+        UPDATE inscriptions
+        SET is_active = TRUE
+        WHERE festival_id = $1;"""
+        
+        result = await db.execute(query, festival_id)
+        
+        # Activate posts for the festival
+        query = """
+        UPDATE postes
+        SET is_active = TRUE
+        WHERE festival_id = $1;"""
+        
+        result = await db.execute(query, festival_id)
+        
+        # Activate csv (zones benevoles and games) for the festival
+        query = """
+        UPDATE csv
+        SET is_active = TRUE
+        WHERE festival_id = $1;"""
     
-    # Activate inscriptions for the festival
-    query = """
-    UPDATE inscriptions
-    SET is_active = TRUE
-    WHERE festival_id = $1;"""
-    
-    result = await db.execute(query, festival.festival_id)
-    
-    # Deactivate all postes
-    query = """
-    UPDATE postes
-    SET is_active = FALSE
-    WHERE is_active = TRUE;"""
-    
-    result = await db.execute(query)
-    
-    # Activate posts for the festival
-    query = """
-    UPDATE postes
-    SET is_active = TRUE
-    WHERE festival_id = $1;"""
-    
-    result = await db.execute(query, festival.festival_id)
-    
-    # Deactivate all csv (zones benevoles and games)
-    query = """
-    UPDATE csv
-    SET is_active = FALSE
-    WHERE is_active = TRUE;"""
-    
-    result = await db.execute(query)
-    
-    # Activate csv (zones benevoles and games) for the festival
-    query = """
-    UPDATE csv
-    SET is_active = TRUE
-    WHERE festival_id = $1;"""
-    
-    result = await db.execute(query, festival.festival_id)
-    
-    # Deactivate all festivals
-    query = """
-    UPDATE festivals
-    SET is_active = FALSE
-    WHERE is_active = TRUE;"""
-    
-    result = await db.execute(query)
-    
-    # Activate the festival
-    query = """
-    UPDATE festivals
-    SET is_active = TRUE
-    WHERE festival_id = $1;"""
+        result = await db.execute(query, festival_id)
+        
+        # Activate the festival
+        query = """
+        UPDATE festivals
+        SET is_active = TRUE
+        WHERE festival_id = $1;"""
 
-    result = await db.execute(query, festival.festival_id)
+        result = await db.execute(query, festival_id)
 
-    return { "message" :"Festival activated successfully" }
+    return { "message" :"Festival activated/deactivated successfully" }
+
+
+# Function to get active festival
+async def get_active_festival():
+
+    query = """
+    SELECT 
+        festival_id, 
+        festival_name, 
+        festival_description,
+        is_active
+    FROM festivals
+    WHERE is_active = TRUE;"""
+
+    result = await db.fetch_row(query)
+    
+    if result is None:
+        return None
+    
+    return Festival(festival_id=result["festival_id"], festival_name=result["festival_name"], festival_description=result["festival_description"], is_active=result["is_active"])
