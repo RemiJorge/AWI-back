@@ -13,7 +13,6 @@ class Database:
         self._cursor = None
 
         self._connection_pool = None
-        self.con = None
 
     # Function to connect to the database
     # Create a connection pool
@@ -21,8 +20,8 @@ class Database:
         if not self._connection_pool:
             try:
                 self._connection_pool = await asyncpg.create_pool(
-                    min_size=1,
-                    max_size=10,
+                    min_size=10,
+                    max_size=30,
                     command_timeout=60,
                     host=self.host,
                     port=self.port,
@@ -50,30 +49,30 @@ class Database:
         if not self._connection_pool:
             await self.connect()
         else:
-            self.con = await self._connection_pool.acquire()
+            con = await self._connection_pool.acquire()
             try:
-                result = await self.con.fetch(query, *args)
+                result = await con.fetch(query, *args)
                 return result
             except Exception as e:
                 print("Database ERROR while fetching rows: ", e)
                 raise e
             finally:
-                await self._connection_pool.release(self.con)
+                await self._connection_pool.release(con)
 
     # Function to fetch a single row
     async def fetch_row(self, query: str, *args):
         if not self._connection_pool:
             await self.connect()
         else:
-            self.con = await self._connection_pool.acquire()
+            con = await self._connection_pool.acquire()
             try:
-                result = await self.con.fetchrow(query, *args)
+                result = await con.fetchrow(query, *args)
                 return result
             except Exception as e:
                 print("Database ERROR while fetching row: ", e)
                 raise e
             finally:
-                await self._connection_pool.release(self.con)
+                await self._connection_pool.release(con)
     
     # Function to execute a query that returns a single value
     # Example: INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING user_id;
@@ -81,40 +80,40 @@ class Database:
         if not self._connection_pool:
             await self.connect()
         else:
-            self.con = await self._connection_pool.acquire()
+            con = await self._connection_pool.acquire()
             try:
-                result = await self.con.fetchval(query, *args)
+                result = await con.fetchval(query, *args)
                 return result
             except Exception as e:
                 print("Database ERROR while fetching val: ", e)
                 raise e
             finally:
-                await self._connection_pool.release(self.con)
+                await self._connection_pool.release(con)
 
     # Function to execute any query
     async def execute(self, query: str, *args):
         if not self._connection_pool:
             await self.connect()
         else:
-            self.con = await self._connection_pool.acquire()
+            con = await self._connection_pool.acquire()
             try:
-                result = await self.con.execute(query, *args)
+                result = await con.execute(query, *args)
                 return result
             except Exception as e:
                 print("Database ERROR while executing query: ", e)
                 raise e
             finally:
-                await self._connection_pool.release(self.con)
+                await self._connection_pool.release(con)
                 
     # Function to insert multiple rows
     async def insert_many(self, table_name: str, data: list, columns: list):
         if not self._connection_pool:
             await self.connect()
         else:
-            self.con = await self._connection_pool.acquire()
+            con = await self._connection_pool.acquire()
             try:
                 # Use copy_records_to_table for efficient bulk inserts
-                result = await self.con.copy_records_to_table(
+                result = await con.copy_records_to_table(
                     table_name=table_name,
                     records=data,
                     columns=columns,
@@ -124,20 +123,20 @@ class Database:
                 print("Database ERROR while inserting many: ", e)
                 raise e
             finally:
-                await self._connection_pool.release(self.con)
+                await self._connection_pool.release(con)
     
     # Function to execute the same query multiple times with different arguments
     async def execute_many(self, query: str, args: list):
         if not self._connection_pool:
             await self.connect()
         else:
-            self.con = await self._connection_pool.acquire()
+            con = await self._connection_pool.acquire()
             try:
-                await self.con.executemany(query, args)
+                await con.executemany(query, args)
             except Exception as e:
                 print("Database ERROR while executing many: ", e)
                 raise e
             finally:
-                await self._connection_pool.release(self.con)
+                await self._connection_pool.release(con)
 
 
