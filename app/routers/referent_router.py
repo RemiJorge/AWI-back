@@ -37,7 +37,6 @@ async def get_referents_for_poste_route(poste: ReferentQuery, user: Annotated[Us
 async def get_users_for_referent_route(festival_id: int,user: Annotated[User, Security(verify_token, scopes=["Referent"])]):
     return await get_users_for_referent(user.user_id, festival_id)
 
-# Route to unassign a referent from a poste
 @referent_router.delete("/unassign", response_model=dict, description="Unassign a referent from a poste")
 async def unassign_referent_from_poste_route(poste_ref: AssignReferent, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
     return await unassign_referent_from_poste(poste_ref.user_id, poste_ref.poste_id, poste_ref.festival_id)

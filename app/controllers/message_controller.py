@@ -1,0 +1,150 @@
+from ..database.db_session import get_db
+from ..models.message import MessageSend, MessageSendPoste, MessageSendEveryone
+from .referent_controller import get_users_for_referent
+
+db = get_db()
+
+
+"""CREATE TABLE messages (
+    message_id SERIAL PRIMARY KEY,
+    festival_id INTEGER REFERENCES festivals(festival_id) ON DELETE CASCADE,
+    user_to INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+    user_from INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+    msg VARCHAR(255),
+    msg_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_read BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE
+);"""
+
+
+# Function to send a message
+async def send_message(message: MessageSend, user_id: int):
+    
+    query = """
+    INSERT INTO messages (festival_id, user_to, user_from, msg)
+    VALUES ($1, $2, $3, $4)
+    RETURNING message_id;
+    """
+    
+    result = await db.fetch_val(query, message.festival_id, message.user_to, user_id, message.message)
+    
+    return {"message": "Message sent", "message_id": result}
+
+
+# Function to get all messages (for yourself)
+async def get_all_messages(festival_id: int, user_id: int):
+        
+        query = """
+        SELECT * 
+        FROM messages 
+        WHERE user_to = $1 AND festival_id = $2;
+        """
+        
+        result = await db.fetch_rows(query, user_id, festival_id)
+        
+        result = [dict(row) for row in result]
+        
+        # Mark all messages as read
+        query = """
+        UPDATE messages
+        SET is_read = TRUE
+        WHERE user_to = $1 AND festival_id = $2;
+        """
+        
+        _ = await db.execute(query, user_id, festival_id)
+        
+        return result
+    
+
+# Function to delete a message
+async def delete_message(message_id: int, user_id: int):
+    
+    # Check that the message was sent by the user
+    query = """
+    SELECT * FROM messages WHERE message_id = $1 AND user_from = $2;
+    """
+    
+    result = await db.fetch_row(query, message_id, user_id)
+    
+    if not result:
+        return {"message": "Message not found"}
+    
+    query = """
+    DELETE FROM messages WHERE message_id = $1;
+    """
+    
+    await db.execute(query, message_id)
+    
+    return {"message": "Message deleted"}
+
+
+# Function to delete all messages
+async def delete_all_messages(festival_id: int, user_id: int):
+    
+    query = """
+    DELETE FROM messages WHERE user_to = $1 AND festival_id = $2;
+    """
+    
+    await db.execute(query, user_id, festival_id)
+    
+    return {"message": "All messages deleted"}
+
+
+# Function to send a message to everyone
+async def send_message_to_everyone(message: MessageSendEveryone, user_id: int):
+    
+    # Get all users in the festival
+    query = """
+    SELECT user_id FROM users;
+    """
+    
+    result = await db.fetch_rows(query)
+    
+    user_ids = [row["user_id"] for row in result]
+    
+    columns = ["festival_id", "user_from", "user_to", "msg"]
+    
+    values = [[message.festival_id, user_id, user, message.message] for user in user_ids]
+    
+    await db.insert_many("messages", values, columns)
+    
+    return {"message": "Message sent to everyone"}
+
+# Function to send a message to a poste
+async def send_message_to_poste(message: MessageSendPoste, user_id: int):
+    
+    # Get all users in the poste
+    result = await get_users_for_referent(user_id, message.festival_id)
+    
+    user_ids = []
+    
+    for row in result:
+        inscriptions = row["inscriptions"]
+        for inscription in inscriptions:
+            if row["poste_id"] == message.poste_id:
+                if inscription["user_id"] not in user_ids:
+                    user_ids.append(inscription["user_id"])
+                    
+    # Send the message to all users in the poste
+    columns = ["festival_id", "user_from", "user_to", "msg"]
+    
+    values = [[message.festival_id, user_id, user, message.message] for user in user_ids]
+    
+    await db.insert_many("messages", values, columns)
+    
+    return {"message": "Message sent to poste"}
+
+
+
+# Function to get the number of new messages
+async def get_new_messages(festival_id: int, user_id: int):
+    
+    query = """
+    SELECT COUNT(*) 
+    FROM messages 
+    WHERE user_to = $1 AND festival_id = $2 AND is_read = FALSE;
+    """
+    
+    result = await db.fetch_val(query, user_id, festival_id)
+    
+    return {"new_messages": result}

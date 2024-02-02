@@ -58,6 +58,7 @@ from app.routers.inscription_router import inscription_router
 from app.routers.festival_router import festival_router
 from app.routers.referent_router import referent_router
 from app.routers.poste_router import poste_router
+from app.routers.message_router import message_router
 
 app.include_router(user_router)
 app.include_router(auth_router)
@@ -67,6 +68,7 @@ app.include_router(inscription_router)
 app.include_router(festival_router)
 app.include_router(referent_router)
 app.include_router(poste_router)
+app.include_router(message_router)
 
 
 async def insert_test_data(db):

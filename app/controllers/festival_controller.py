@@ -5,14 +5,25 @@ db = get_db()
 
 
 # Function to create a new festival
-async def create_festival(festival: Festival):
+async def create_festival(festival_name: str, festival_description: str):
 
     query = """
     INSERT INTO festivals (festival_name, festival_description) 
     VALUES ($1, $2)
-    ON CONFLICT (festival_name) DO NOTHING;"""
+    ON CONFLICT (festival_name) DO NOTHING
+    RETURNING festival_id;"""
 
-    result = await db.execute(query, festival.festival_name, festival.festival_description)
+
+    result = await db.fetch_val(query, festival_name, festival_description)
+    
+    # Add "Animation" Poste
+    query = """
+    INSERT INTO postes (festival_id, poste, description_poste)
+    VALUES ($1, 'Animation', 'Poste pour les animations');
+    """
+    
+    result = await db.execute(query, result)
+    
 
     return { "message" :"Festival created successfully" }
 

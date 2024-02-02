@@ -12,6 +12,10 @@ from ..models.user import User
 from ..models.festival import Festival
 from pydantic import BaseModel
 
+class CreateFestival(BaseModel):
+    festival_name: str
+    festival_description: str
+
 class FestivalActivate(BaseModel):
     festival_id: int
     is_active: bool
@@ -23,8 +27,8 @@ festival_router = APIRouter(
 )
 
 @festival_router.post("", response_model=dict, description="Create a new festival")
-async def create_festival_route(festival: Festival, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
-    return await create_festival(festival) 
+async def create_festival_route(festival: CreateFestival, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
+    return await create_festival(festival.festival_name, festival.festival_description)
 
 @festival_router.get("", response_model=list[Festival], description="Get all festivals")
 async def get_all_festivals_route(user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
