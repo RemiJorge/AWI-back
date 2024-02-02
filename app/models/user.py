@@ -14,4 +14,14 @@ class User(BaseModel):
     association: str
     roles: list[str] = []
     disabled: bool | None = None
+    
+class UpdateUser(BaseModel):
+    telephone: str
+    nom: str
+    prenom: str
+    tshirt: str
+    vegan: bool
+    hebergement: str
+    association: str
+    
 

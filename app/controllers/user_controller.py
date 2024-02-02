@@ -1,5 +1,5 @@
 from ..database.db_session import get_db
-from ..models.user import User 
+from ..models.user import User, UpdateUser
 
 db = get_db()
 
@@ -262,4 +262,28 @@ async def get_all_users(page: int, limit: int):
     return users
 
 
-# Function to update a user
+# Function to delete all personal data
+async def delete_data(user: User):
+    query = """
+    DELETE FROM users WHERE user_id = $1;
+    """
+    await db.execute(query, user.user_id)
+    return { "message": "Data successfully deleted" }
+
+# Function to update user info
+async def update_user_info(user: User, new_info: UpdateUser):
+    query = """
+    UPDATE users
+    SET
+        telephone = $1,
+        nom = $2,
+        prenom = $3,
+        tshirt = $4,
+        vegan = $5,
+        hebergement = $6,
+        association = $7
+    WHERE
+        user_id = $8;
+    """
+    await db.execute(query, new_info.telephone, new_info.nom, new_info.prenom, new_info.tshirt, new_info.vegan, new_info.hebergement, new_info.association, user.user_id)
+    return { "message": "User info successfully updated" }
