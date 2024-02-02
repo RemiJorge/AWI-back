@@ -1,5 +1,9 @@
 from ..database.db_session import get_db
 from ..models.user import User, UpdateUser
+from passlib.context import CryptContext
+
+# Global variables
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 db = get_db()
 
@@ -272,18 +276,35 @@ async def delete_data(user: User):
 
 # Function to update user info
 async def update_user_info(user: User, new_info: UpdateUser):
+    # Check if username already exists
+    if new_info.username != user.username:
+        user_exists = await find_user_by_username(new_info.username)
+        if user_exists is not None:
+            return { "message": "Username already exists" }
+    # Check if email already exists
+    if new_info.email != user.email:
+        email_exists = await find_user_by_email(new_info.email)
+        if email_exists is not None:
+            return { "message": "Email already exists" }
+        
+    # Hash the password
+    hashed_password = pwd_context.hash(new_info.password)
+    
     query = """
     UPDATE users
     SET
-        telephone = $1,
-        nom = $2,
-        prenom = $3,
-        tshirt = $4,
-        vegan = $5,
-        hebergement = $6,
-        association = $7
+        username = $1,
+        email = $2,
+        telephone = $3,
+        password = $4,
+        nom = $5,
+        prenom = $6,
+        tshirt = $7,
+        vegan = $8,
+        hebergement = $9,
+        association = $10
     WHERE
-        user_id = $8;
+        user_id = $11;
     """
-    await db.execute(query, new_info.telephone, new_info.nom, new_info.prenom, new_info.tshirt, new_info.vegan, new_info.hebergement, new_info.association, user.user_id)
+    await db.execute(query, new_info.username, new_info.email, new_info.telephone, hashed_password, new_info.nom, new_info.prenom, new_info.tshirt, new_info.vegan, new_info.hebergement, new_info.association, user.user_id)
     return { "message": "User info successfully updated" }

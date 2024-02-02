@@ -16,6 +16,9 @@ class User(BaseModel):
     disabled: bool | None = None
     
 class UpdateUser(BaseModel):
+    username: str
+    email: str
+    password: str
     telephone: str
     nom: str
     prenom: str
