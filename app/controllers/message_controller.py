@@ -5,28 +5,23 @@ from .referent_controller import get_users_for_referent
 db = get_db()
 
 
-"""CREATE TABLE messages (
-    message_id SERIAL PRIMARY KEY,
-    festival_id INTEGER REFERENCES festivals(festival_id) ON DELETE CASCADE,
-    user_to INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
-    user_from INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
-    msg VARCHAR(255),
-    msg_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_read BOOLEAN DEFAULT FALSE,
-    is_active BOOLEAN DEFAULT TRUE
-);"""
-
-
 # Function to send a message
-async def send_message(message: MessageSend, user_id: int):
+async def send_message(message: MessageSend, user_id: int, username: str, roles: list):
     
     query = """
-    INSERT INTO messages (festival_id, user_to, user_from, msg)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO messages (festival_id, user_to, user_from, user_from_username, user_from_role, msg)
+    VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING message_id;
     """
     
-    result = await db.fetch_val(query, message.festival_id, message.user_to, user_id, message.message)
+    role = "User"
+    
+    if "Referent" in roles:
+        role = "Referent"
+    if "Admin" in roles:
+        role = "Admin"
+    
+    result = await db.fetch_val(query, message.festival_id, message.user_to, user_id, username, role, message.message)
     
     return {"message": "Message sent", "message_id": result}
 

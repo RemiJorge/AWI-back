@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS user_roles CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
 
 -- Create the "roles" table to store user roles
 CREATE TABLE roles (
@@ -13,15 +13,22 @@ CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE, 
     password VARCHAR(255) NOT NULL, 
-    email VARCHAR(255) NOT NULL UNIQUE, 
+    email VARCHAR(255) NOT NULL UNIQUE,
+    telephone VARCHAR(255) NOT NULL,
+    nom VARCHAR(255) NOT NULL,
+    prenom VARCHAR(255) NOT NULL,
+    tshirt VARCHAR(255) NOT NULL,
+    vegan BOOLEAN DEFAULT FALSE,
+    hebergement VARCHAR(255) NOT NULL,
+    association VARCHAR(255) NOT NULL, 
     disabled BOOLEAN DEFAULT FALSE 
 );
 
 
 -- Create the "user_roles" table to manage user-to-role relationships
 CREATE TABLE user_roles (
-    user_id INT REFERENCES users(user_id),
-    role_id INT REFERENCES roles(role_id),
+    user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+    role_id INT REFERENCES roles(role_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, role_id)
 );
 

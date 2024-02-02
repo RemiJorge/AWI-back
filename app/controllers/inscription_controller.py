@@ -17,6 +17,10 @@ DELETE_QUERY = """
     DELETE FROM inscriptions
     WHERE user_id = $1 AND poste = $2 AND zone_plan = $3 AND zone_benevole_id = $4 AND zone_benevole_name = $5 AND jour = $6 AND creneau = $7 AND is_poste = $8 AND is_active = True AND festival_id = $9;
     """
+DELETE_QUERY_2 = """
+    DELETE FROM inscriptions
+    WHERE user_id = $1 AND poste = $2 AND jour = $3 AND creneau = $4 AND is_poste = $5 AND is_active = True AND festival_id = $6;
+    """
 SELECT_POSTES_QUERY = """
     SELECT festival_id, poste
     FROM postes
@@ -66,6 +70,11 @@ async def desinscription_user_poste(user: User, inscription: InscriptionPoste):
     query = DELETE_QUERY
 
     result = await db.execute(query, user.user_id, inscription.poste, "", "", "", inscription.jour, inscription.creneau, True, inscription.festival_id)
+    
+    # Remove the inscriptions for the zone benevoles under the poste "Animation" for the same jour and creneau
+    if inscription.poste == "Animation":
+        query = DELETE_QUERY_2
+        result = await db.execute(query, user.user_id, inscription.poste, inscription.jour, inscription.creneau, False, inscription.festival_id)
 
     return {"message": "Successfully removed inscription from poste"}
 
@@ -251,6 +260,19 @@ async def batch_inscription_poste(user: User, batch_inscription: BatchInscriptio
         
         await db.execute_many(query, desincriptions)
         
+        desincriptions = batch_inscription.desinscriptions
+        
+        desincriptions_zone = []
+        
+        # Remove the inscriptions for the zone benevoles under the poste "Animation" for the same jour and creneau
+        for inscription in desincriptions:
+            if inscription.poste == "Animation":
+                desincriptions_zone.append((user.user_id, inscription.poste, inscription.jour, inscription.creneau, False, inscription.festival_id))
+                
+        if len(desincriptions_zone) > 0:
+            query = DELETE_QUERY_2      
+            await db.execute_many(query, desincriptions_zone)
+                
     if len(batch_inscription.inscriptions) > 0:
         # Inscriptions
         inscriptions = batch_inscription.inscriptions
@@ -394,6 +416,22 @@ async def delete_user_to_poste(poste: AssignInscriptionPoste):
     """
     
     await db.execute(query, poste.poste, poste.jour, poste.creneau, poste.festival_id, poste.user_id)
+    
+    # Remove the inscriptions for the zone benevoles under the poste "Animation" for the same jour and creneau
+    if poste.poste == "Animation":
+        query = """
+        DELETE FROM
+            inscriptions
+        WHERE
+            poste = $1
+            AND jour = $2
+            AND creneau = $3
+            AND is_poste = False
+            AND festival_id = $4
+            AND user_id = $5;
+        """
+        
+        await db.execute(query, poste.poste, poste.jour, poste.creneau, poste.festival_id, poste.user_id)
     
     return {"message": "Successfully deleted user to poste"}
 

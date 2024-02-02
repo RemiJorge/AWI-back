@@ -54,9 +54,5 @@ async def logout(
 # Route to register a new user in the database
 @auth_router.post("/signup")
 async def signup(user: User):
-    # Get the data from the request
-    username = user.username
-    email = user.email
-    password = user.password
-    payload = await register_user(username, email, password)
+    payload = await register_user(user)
     return payload    

@@ -26,7 +26,7 @@ message_router = APIRouter(
 
 @message_router.post("/send", response_model=dict, description="Send a message")
 async def send_message_route(message: MessageSend, user: Annotated[User, Security(verify_token, scopes=["User"])]):
-    return await send_message(message, user.user_id)
+    return await send_message(message, user.user_id, user.username, user.roles)
 
 @message_router.get("/{festival_id}", response_model=list, description="Get all messages sent to you")
 async def get_all_messages_route(festival_id: int, user: Annotated[User, Security(verify_token, scopes=["User"])]):

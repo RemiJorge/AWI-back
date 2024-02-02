@@ -59,6 +59,7 @@ async def authenticate_user(username: str, password: str):
         return False
     if not verify_password(password, user.password):
         return False
+    user.password = ""
     return user
 
 
@@ -250,18 +251,31 @@ async def does_email_exist(email: str):
     return True
 
 
-async def register_user(username: str, email: str, password: str):
+async def register_user(user: User):
     # Check if user already exists
-    user_exists = await does_user_exist(username)
+    user_exists = await does_user_exist(user.username)
     if user_exists:
         return JSONResponse(content={"message": "Username already exists"}, status_code=409)
     # Check if email already exists
-    email_exists = await does_email_exist(email)
+    email_exists = await does_email_exist(user.email)
     if email_exists:
         return JSONResponse(content={"message": "Email already exists"}, status_code=409)
     # Hash the password
-    hashed_password = get_password_hash(password)
-    user = User(username=username, email=email, password=hashed_password, name=username, roles=["User", "Referent", "Admin", "Super"], disabled=False)
+    hashed_password = get_password_hash(user.password)
+    user = User(
+        username=user.username,
+        email=user.email,
+        telephone=user.telephone,
+        password=hashed_password,
+        prenom=user.prenom,
+        nom=user.nom,
+        tshirt=user.tshirt,
+        vegan=user.vegan,
+        hebergement=user.hebergement,
+        association=user.association,
+        roles=["User"],
+        disabled=False
+    )
     # Create the user in the database
     payload = await create_user(user)
     return payload

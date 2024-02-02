@@ -3,14 +3,29 @@ from ..models.user import User
 
 db = get_db()
 
+"""class User(BaseModel):
+    user_id: int | None = None
+    username: str
+    password: str
+    email: str
+    telephone: str
+    nom: str
+    prenom: str
+    tshirt: str
+    vegan: bool
+    hebergement: str
+    association: str
+    roles: list[str] = []
+    disabled: bool | None = None"""
+
 # Function to create a new user in the database
 async def create_user(user: User):
     query = """
-    INSERT INTO users (username, email, password, disabled)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO users (username, email, telephone, password, nom, prenom, tshirt, vegan, hebergement, association)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING user_id;
     """
-    user_id = await db.fetch_val(query, user.username, user.email, user.password, user.disabled)
+    user_id = await db.fetch_val(query, user.username, user.email, user.telephone, user.password, user.nom, user.prenom, user.tshirt, user.vegan, user.hebergement, user.association)
     query = """
     INSERT INTO user_roles (user_id, role_id)
     VALUES ($1, $2);
@@ -28,9 +43,16 @@ async def find_user_by_username(username: str) -> User:
         u.user_id,
         u.username,
         u.email,
+        u.telephone,
         u.password,
         u.disabled,
-        array_agg(r.role_name) AS roles
+        array_agg(r.role_name) AS roles,
+        u.prenom,
+        u.nom,
+        u.tshirt,
+        u.vegan,
+        u.hebergement,
+        u.association
     FROM
         users u
     JOIN
@@ -50,10 +72,17 @@ async def find_user_by_username(username: str) -> User:
         user_id=user_dict["user_id"],
         username=user_dict["username"],
         email=user_dict["email"],
+        telephone=user_dict["telephone"],
         name=user_dict["username"], 
         disabled=user_dict["disabled"], 
-        password=user_dict["password"], 
-        roles=user_dict["roles"]
+        password=user_dict["password"],
+        roles=user_dict["roles"],
+        prenom=user_dict["prenom"],
+        nom=user_dict["nom"],
+        tshirt=user_dict["tshirt"],
+        vegan=user_dict["vegan"],
+        hebergement=user_dict["hebergement"],
+        association=user_dict["association"]
         )
     return user
 
@@ -64,9 +93,16 @@ async def find_user_by_email(email: str) -> User:
         u.user_id,
         u.username,
         u.email,
+        u.telephone,
         u.password,
         u.disabled,
-        array_agg(r.role_name) AS roles
+        array_agg(r.role_name) AS roles,
+        u.prenom,
+        u.nom,
+        u.tshirt,
+        u.vegan,
+        u.hebergement,
+        u.association
     FROM
         users u
     JOIN
@@ -86,10 +122,16 @@ async def find_user_by_email(email: str) -> User:
         user_id=user_dict["user_id"],
         username=user_dict["username"],
         email=user_dict["email"],
-        name=user_dict["username"], 
+        telephone=user_dict["telephone"],
         disabled=user_dict["disabled"], 
-        password=user_dict["password"], 
-        roles=user_dict["roles"]
+        password=user_dict["password"],
+        roles=user_dict["roles"],
+        prenom=user_dict["prenom"],
+        nom=user_dict["nom"],
+        tshirt=user_dict["tshirt"],
+        vegan=user_dict["vegan"],
+        hebergement=user_dict["hebergement"],
+        association=user_dict["association"]
         )
     return user
 
@@ -100,9 +142,16 @@ async def find_user_by_user_id(user_id: int) -> User:
         u.user_id,
         u.username,
         u.email,
+        u.telephone,
         u.password,
         u.disabled,
-        array_agg(r.role_name) AS roles
+        array_agg(r.role_name) AS roles,
+        u.prenom,
+        u.nom,
+        u.tshirt,
+        u.vegan,
+        u.hebergement,
+        u.association
     FROM
         users u
     JOIN
@@ -122,10 +171,16 @@ async def find_user_by_user_id(user_id: int) -> User:
         user_id=user_dict["user_id"],
         username=user_dict["username"],
         email=user_dict["email"],
-        name=user_dict["username"], 
+        telephone=user_dict["telephone"],
         disabled=user_dict["disabled"], 
-        password=user_dict["password"], 
-        roles=user_dict["roles"]
+        password="", 
+        roles=user_dict["roles"],
+        prenom=user_dict["prenom"],
+        nom=user_dict["nom"],
+        tshirt=user_dict["tshirt"],
+        vegan=user_dict["vegan"],
+        hebergement=user_dict["hebergement"],
+        association=user_dict["association"]
         )
     return user
 
@@ -161,9 +216,16 @@ async def get_all_users(page: int, limit: int):
         u.user_id,
         u.username,
         u.email,
+        u.telephone,
         u.password,
         u.disabled,
-        array_agg(r.role_name) AS roles
+        array_agg(r.role_name) AS roles,
+        u.prenom,
+        u.nom,
+        u.tshirt,
+        u.vegan,
+        u.hebergement,
+        u.association
     FROM
         users u
     JOIN
@@ -185,10 +247,19 @@ async def get_all_users(page: int, limit: int):
             user_id=user_dict["user_id"],
             username=user_dict["username"],
             email=user_dict["email"],
-            name=user_dict["username"], 
+            telephone=user_dict["telephone"],
             disabled=user_dict["disabled"], 
-            password=user_dict["password"], 
-            roles=user_dict["roles"]
+            password="",
+            roles=user_dict["roles"],
+            prenom=user_dict["prenom"],
+            nom=user_dict["nom"],
+            tshirt=user_dict["tshirt"],
+            vegan=user_dict["vegan"],
+            hebergement=user_dict["hebergement"],
+            association=user_dict["association"]
             )
         users.append(user)
     return users
+
+
+# Function to update a user
