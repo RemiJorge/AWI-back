@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from typing import Annotated
 
 from ..controllers.auth_controller import verify_token
-from ..controllers.user_controller import find_user_by_user_id, ban_user_by_user_id, get_all_users, delete_data, update_user_info
+from ..controllers.user_controller import find_user_by_user_id, ban_user_by_user_id, get_all_users, delete_data, update_user_info, search_users
 from ..models.user import User, UpdateUser
 
 
@@ -31,5 +31,9 @@ async def delete_data_route(user: Annotated[None, Security(verify_token, scopes=
 @user_router.put("/update-info", response_model=dict, description="Update user info")
 async def update_user_info_route(user: Annotated[None, Security(verify_token, scopes=["User"])], new_info: UpdateUser):
     return await update_user_info(user, new_info)
+
+@user_router.get("/search/username", response_model=list[User], description="Search for users by username")
+async def search_users_route(user: Annotated[None, Security(verify_token, scopes=["User"])], username: str, page: int = 1, limit: int = 10):
+    return await search_users(page, limit, username)
     
 

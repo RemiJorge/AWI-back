@@ -308,3 +308,57 @@ async def update_user_info(user: User, new_info: UpdateUser):
     """
     await db.execute(query, new_info.username, new_info.email, new_info.telephone, hashed_password, new_info.nom, new_info.prenom, new_info.tshirt, new_info.vegan, new_info.hebergement, new_info.association, user.user_id)
     return { "message": "User info successfully updated" }
+
+# Function to search for users by username with pagination
+async def search_users(page: int, limit: int, username: str):
+    query = """
+    SELECT
+        u.user_id,
+        u.username,
+        u.email,
+        u.telephone,
+        u.password,
+        u.disabled,
+        array_agg(r.role_name) AS roles,
+        u.prenom,
+        u.nom,
+        u.tshirt,
+        u.vegan,
+        u.hebergement,
+        u.association
+    FROM
+        users u
+    JOIN
+        user_roles ur ON u.user_id = ur.user_id
+    JOIN
+        roles r ON ur.role_id = r.role_id
+    WHERE
+        u.username ILIKE $1
+    GROUP BY
+        u.user_id, u.username, u.email
+    ORDER BY
+        u.user_id
+    LIMIT $2 OFFSET $3;
+    """
+    offset = (page - 1) * limit
+    result = await db.fetch_rows(query, f"%{username}%", limit, offset)
+    users = []
+    for row in result:
+        user_dict = dict(row)
+        user = User(
+            user_id=user_dict["user_id"],
+            username=user_dict["username"],
+            email=user_dict["email"],
+            telephone=user_dict["telephone"],
+            disabled=user_dict["disabled"], 
+            password="",
+            roles=user_dict["roles"],
+            prenom=user_dict["prenom"],
+            nom=user_dict["nom"],
+            tshirt=user_dict["tshirt"],
+            vegan=user_dict["vegan"],
+            hebergement=user_dict["hebergement"],
+            association=user_dict["association"]
+            )
+        users.append(user)
+    return users
