@@ -133,16 +133,16 @@ async def insert_test_data(db):
     """
     
     # For the festival FestivalTest
-    await db.execute(query, festival_id, "PosteTest1", "Description du poste 1", 2)
-    await db.execute(query, festival_id, "PosteTest2", "Description du poste 2", 2)
-    await db.execute(query, festival_id, "PosteTest3", "Description du poste 3", 2)
-    await db.execute(query, festival_id, "Animation", "Description du poste Animation", 2)
+    await db.execute(query, festival_id, "PosteTest1", "Description du poste 1", 10)
+    await db.execute(query, festival_id, "PosteTest2", "Description du poste 2", 10)
+    await db.execute(query, festival_id, "PosteTest3", "Description du poste 3", 10)
+    await db.execute(query, festival_id, "Animation", "Description du poste Animation", 10)
     
     # For the festival FestivalTest2
-    await db.execute(query2, festival_id2, "PosteTest1", "Description du poste 1", 2, False)
-    await db.execute(query2, festival_id2, "PosteTest2", "Description du poste 2", 2, False)
-    await db.execute(query2, festival_id2, "PosteTest3", "Description du poste 3", 2, False)
-    await db.execute(query2, festival_id2, "Animation", "Description du poste Animation", 2, False)
+    await db.execute(query2, festival_id2, "PosteTest1", "Description du poste 1", 10, False)
+    await db.execute(query2, festival_id2, "PosteTest2", "Description du poste 2", 10, False)
+    await db.execute(query2, festival_id2, "PosteTest3", "Description du poste 3", 10, False)
+    await db.execute(query2, festival_id2, "Animation", "Description du poste Animation", 20, False)
     
     query = """
     INSERT INTO inscriptions (user_id, festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)

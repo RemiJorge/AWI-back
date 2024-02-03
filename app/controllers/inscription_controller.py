@@ -22,7 +22,7 @@ DELETE_QUERY_2 = """
     WHERE user_id = $1 AND poste = $2 AND jour = $3 AND creneau = $4 AND is_poste = $5 AND is_active = True AND festival_id = $6;
     """
 SELECT_POSTES_QUERY = """
-    SELECT festival_id, poste
+    SELECT festival_id, poste, max_capacity
     FROM postes
     WHERE festival_id = $1;
     """
@@ -98,7 +98,7 @@ async def get_nb_inscriptions_poste(user_id: int, festival_id: int):
     to_send = []
     for jour in JOURS:
         for creneau in CRENEAUX:
-            to_send += [{"festival_id": row["festival_id"], "poste": row["poste"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0, "is_register": False} for row in result]
+            to_send += [{"festival_id": row["festival_id"], "poste": row["poste"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0, "is_register": False, "max_capacity": row["max_capacity"]} for row in result]
     
     query = SELECT_NB_INS_POSTES_QUERY
 
@@ -122,15 +122,25 @@ async def get_nb_inscriptions_zone_benevole(user_id: int, festival_id: int):
     query = SELECT_ZONES_BENEVOLES_QUERY
     
     result = await db.fetch_rows(query, festival_id)
+    
+    max_capacity_dict = {}
+    # Calculate the max capacity for each zone benevole
+    for row in result:
+        # Check if it is None
+        if (row["zone_plan"], row["zone_benevole_id"], row["zone_benevole"]) not in max_capacity_dict:
+            max_capacity_dict[(row["zone_plan"], row["zone_benevole_id"], row["zone_benevole"])] = 2
+        elif max_capacity_dict[(row["zone_plan"], row["zone_benevole_id"], row["zone_benevole"])] < row["nb_inscriptions"]:
+            max_capacity_dict[(row["zone_plan"], row["zone_benevole_id"], row["zone_benevole"])] = row["nb_inscriptions"]
 
     to_send = []
     for jour in JOURS:
         for creneau in CRENEAUX:
-            to_send += [{"festival_id": row["festival_id"], "poste": "Animation", "zone_plan": row["zone_plan"], "zone_benevole_id": row["zone_benevole_id"], "zone_benevole_name": row["zone_benevole"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0, "is_register": False} for row in result]
+            to_send += [{"festival_id": row["festival_id"], "poste": "Animation", "zone_plan": row["zone_plan"], "zone_benevole_id": row["zone_benevole_id"], "zone_benevole_name": row["zone_benevole"], "jour": jour, "creneau": creneau, "nb_inscriptions": 0, "is_register": False, "max_capacity": max_capacity_dict[(row["zone_plan"], row["zone_benevole_id"], row["zone_benevole"])]} for row in result]
     
     query = SELECT_NB_INS_ZONES_BENEVOLES_QUERY
 
     result = await db.fetch_rows(query, festival_id)
+    
     
     # Update the nb_inscriptions for each zone benevole
     for row in result:
