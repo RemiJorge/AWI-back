@@ -485,16 +485,6 @@ async def get_flexibles(festival_id: int, jour: str, creneau: str):
                 AND festival_id = $1
                 AND JOUR_FILTER
                 AND CRENEAU_FILTER
-        ),
-        PartitionsToSelect AS ( -- We select the partitions that have more than one row
-            SELECT
-                partition_num
-            FROM
-                InscriptionWithRowNum
-            GROUP BY
-                partition_num
-            HAVING
-                COUNT(*) > 1
         )
         SELECT
             u.user_id,
@@ -508,10 +498,10 @@ async def get_flexibles(festival_id: int, jour: str, creneau: str):
             ) AS inscriptions
         FROM
             InscriptionWithRowNum i
-        INNER JOIN
-            PartitionsToSelect p ON i.partition_num = p.partition_num
         JOIN
             users u ON u.user_id = i.user_id
+		WHERE
+			i.partition_num > 1 
         GROUP BY
             u.user_id, u.username;
         """
