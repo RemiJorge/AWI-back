@@ -36,7 +36,7 @@ async def upload_csv_route(user: Annotated[User, Security(verify_token, scopes=[
     return {"message": "csv uploaded"}
 
 
-@file_router.get("/jeux", response_model=list[Game], description="Get all jeux")
+@file_router.get("/jeux", response_model=list[dict], description="Get all jeux")
 async def get_games_info_route(user: Annotated[User, Security(verify_token, scopes=["User"])]):
     return await get_games_info()
 

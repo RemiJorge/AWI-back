@@ -45,7 +45,10 @@ async def get_games_info() -> list[Game]:
     
     result = await db.fetch_rows(query)
     
-    result = [Game(**row) for row in result]
+    if len(result) == 0:
+        return [{"message": "No games found"}]
+    
+    result = [Game(**row).model_dump() for row in result]
     
     return result
 
