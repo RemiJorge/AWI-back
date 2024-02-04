@@ -85,7 +85,7 @@ async def insert_test_data(db):
     await db.execute(query)
     
     query = """
-    INSERT INTO festivals (festival_name, festival_description, is_active) VALUES ('FestivalTest', 'desc', True);"""
+    INSERT INTO festivals (festival_name, festival_description, is_active) VALUES ('FestivalTest', 'Ceci est un Festival test', True);"""
     
     await db.execute(query)
     
@@ -96,7 +96,7 @@ async def insert_test_data(db):
     await db.execute(query)
     
     query = """
-    INSERT INTO festivals (festival_name, festival_description) VALUES ('FestivalTest2', 'desc');"""
+    INSERT INTO festivals (festival_name, festival_description) VALUES ('FestivalTest2', 'Le deuxieme festival');"""
     
     await db.execute(query)
     
@@ -133,16 +133,16 @@ async def insert_test_data(db):
     """
     
     # For the festival FestivalTest
-    await db.execute(query, festival_id, "PosteTest1", "Description du poste 1", 10)
-    await db.execute(query, festival_id, "PosteTest2", "Description du poste 2", 10)
-    await db.execute(query, festival_id, "PosteTest3", "Description du poste 3", 10)
-    await db.execute(query, festival_id, "Animation", "Description du poste Animation", 10)
+    await db.execute(query, festival_id, "Cuisine", "Le poste de cuisine", 10)
+    await db.execute(query, festival_id, "Tombola", "Le poste de tombola", 10)
+    await db.execute(query, festival_id, "Accueil", "Le poste d'accueil", 10)
+    await db.execute(query, festival_id, "Animation", "Le poste Animation", 10)
     
     # For the festival FestivalTest2
-    await db.execute(query2, festival_id2, "PosteTest1", "Description du poste 1", 10, False)
-    await db.execute(query2, festival_id2, "PosteTest2", "Description du poste 2", 10, False)
-    await db.execute(query2, festival_id2, "PosteTest3", "Description du poste 3", 10, False)
-    await db.execute(query2, festival_id2, "Animation", "Description du poste Animation", 20, False)
+    await db.execute(query2, festival_id2, "Cuisine", "Le poste de cuisine", 10, False)
+    await db.execute(query2, festival_id2, "Tombola", "Le poste de tombola", 10, False)
+    await db.execute(query2, festival_id2, "Accueil", "Le poste d'accueil", 10, False)
+    await db.execute(query2, festival_id2, "Animation", "Le poste Animation", 20, False)
     
     query = """
     INSERT INTO inscriptions (user_id, festival_id, poste, zone_plan, zone_benevole_id, zone_benevole_name, jour, creneau, is_poste)
@@ -156,41 +156,41 @@ async def insert_test_data(db):
 
     # Postes
     # Cas : Flexible sur 4 postes avec poste animation
-    await db.execute(query, user_id, festival_id, "PosteTest1", "", "", "", "Samedi", "10h-12h", True)
-    await db.execute(query, user_id, festival_id, "PosteTest2", "", "", "", "Samedi", "10h-12h", True)
-    await db.execute(query, user_id, festival_id, "PosteTest3", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, festival_id, "Cuisine", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, festival_id, "Tombola", "", "", "", "Samedi", "10h-12h", True)
+    await db.execute(query, user_id, festival_id, "Accueil", "", "", "", "Samedi", "10h-12h", True)
     await db.execute(query, user_id, festival_id, "Animation", "", "", "", "Samedi", "10h-12h", True)
-    await db.execute(query, user_id, festival_id, "PosteTest1", "", "", "", "Samedi", "12h-14h", True)
-    await db.execute(query, user_id, festival_id, "PosteTest2", "", "", "", "Samedi", "12h-14h", True)
-    await db.execute(query, user_id, festival_id, "PosteTest3", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, festival_id, "Cuisine", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, festival_id, "Tombola", "", "", "", "Samedi", "12h-14h", True)
+    await db.execute(query, user_id, festival_id, "Accueil", "", "", "", "Samedi", "12h-14h", True)
     await db.execute(query, user_id, festival_id, "Animation", "", "", "", "Samedi", "12h-14h", True)
     
     # For the festival FestivalTest2
-    await db.execute(query2, user_id, festival_id2, "PosteTest1", "", "", "", "Vendredi", "8h-10h", True, False)
+    await db.execute(query2, user_id, festival_id2, "Cuisine", "", "", "", "Vendredi", "8h-10h", True, False)
     
     # Zones benevoles
     # CONSIDER THESE TO BE DIFFERENT USERS BECAUSE YOU CAN'T BE FLEXIBLE ON ZONES BENEVOLES
     # Note : I just fixed this, disregard the above comment
     # (Might put two of the same zone benevole names when uploading new csv with renames or deletions)
     # Cas : Renommage zone benevoles et flexible
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Vendredi", "10h-12h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "10h-12h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Dimanche", "10h-12h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Vendredi", "12h-14h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "12h-14h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Dimanche", "12h-14h", False)
-    # Cas : Tout va bien, zone plan sans zone benevole
-    await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Centre 4", "179", "", "Samedi", "8h-10h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Centre 4", "179", "", "Dimanche", "8h-10h", False)
-    # Cas : Tout va bien, zone plan avec zone benevole
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Vendredi", "8h-10h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Dimanche", "16h-18h", False)
-    # Cas : Split zone plan en plusieurs zones benevoles
-    await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Ouest 3", "123", "", "Samedi", "14h-16h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Ouest 3", "123", "", "Dimanche", "14h-16h", False)
-    # Cas : suppression zone benevole
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Dimanche", "16h-18h", False)
-    await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Samedi", "16h-18h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Vendredi", "10h-12h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "10h-12h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Dimanche", "10h-12h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "1", "ZoneTest1a", "Vendredi", "12h-14h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "2", "ZoneTest1b", "Samedi", "12h-14h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "3", "ZoneTest1c", "Dimanche", "12h-14h", False)
+    # # Cas : Tout va bien, zone plan sans zone benevole
+    # await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Centre 4", "179", "", "Samedi", "8h-10h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Centre 4", "179", "", "Dimanche", "8h-10h", False)
+    # # Cas : Tout va bien, zone plan avec zone benevole
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Vendredi", "8h-10h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Nord 1", "229", "Antigone-Nord 1a", "Dimanche", "16h-18h", False)
+    # # Cas : Split zone plan en plusieurs zones benevoles
+    # await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Ouest 3", "123", "", "Samedi", "14h-16h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Esplanade-Ouest 3", "123", "", "Dimanche", "14h-16h", False)
+    # # Cas : suppression zone benevole
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Dimanche", "16h-18h", False)
+    # await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Samedi", "16h-18h", False)
     
     
     # Delete from referents
@@ -204,9 +204,9 @@ async def insert_test_data(db):
     INSERT INTO referents (user_id, poste_id, festival_id)
     VALUES ($1, $2, $3);"""
     
-    # Get poste_id of the poste PosteTest1
+    # Get poste_id of the poste Cuisine
     query2 = """
-    SELECT poste_id FROM postes WHERE poste = 'PosteTest1' AND festival_id = $1;"""
+    SELECT poste_id FROM postes WHERE poste = 'Cuisine' AND festival_id = $1;"""
     
     poste_id = await db.fetch_val(query2, festival_id)
     

@@ -24,8 +24,8 @@ from ..controllers.inscription_controller import (
     )
 from ..models.user import User
 from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole, AssignInscriptionPoste, AssignInscriptionZoneBenevole
-from ..models.message import MessageSendEveryone
-from ..controllers.message_controller import send_message_to_everyone
+from ..models.message import MessageSendEveryone, MessageSend
+from ..controllers.message_controller import send_message_to_everyone, send_message
 from ..controllers.festival_controller import get_active_festival
 
 
@@ -104,7 +104,11 @@ async def get_inscriptions_zone_benevole_route(zone_benevole: InscriptionZoneBen
 
 @inscription_router.put("/poste/assign", response_model=dict, description="Assign a user to a poste")
 async def assign_user_to_poste_route(poste: AssignInscriptionPoste, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
-    return await assign_user_to_poste(poste)
+    result = await assign_user_to_poste(poste)
+    message = f"{user.username} vous a assigné au poste {poste.poste} pour le {poste.jour} à {poste.creneau}."
+    result2 = await send_message(MessageSend(festival_id=poste.festival_id, message=message, user_to=poste.user_id), user.user_id, user.username, user.roles)
+    return result
+    
 
 @inscription_router.delete("/poste/assign", response_model=dict, description="Delete a user's inscription to a poste")
 async def delete_user_to_poste_route(poste: AssignInscriptionPoste, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
