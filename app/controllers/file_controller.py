@@ -70,4 +70,24 @@ async def check_and_resolve_changes():
     await db.execute(query)
     
     return {"message": "Changes checked and resolved"}
+
+
+# Function to get games by id and festival
+async def get_games_info_by_id(festival_id: int, game_id: str) -> Game:
+    query = """
+    SELECT * 
+    FROM csv
+    WHERE festival_id = $1 AND jeu_id = $2;
+    """
+    
+    result = await db.fetch_row(query, festival_id, game_id)
+    
+    if result is None:
+        return {"message": "No game found"}
+    
+    game = Game(**result)
+    
+    dict_game = game.model_dump()
+    
+    return dict_game
     
