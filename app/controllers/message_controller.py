@@ -86,7 +86,7 @@ async def delete_all_messages(festival_id: int, user_id: int):
 
 
 # Function to send a message to everyone
-async def send_message_to_everyone(message: MessageSendEveryone, user_id: int):
+async def send_message_to_everyone(message: MessageSendEveryone, user_id: int, username: str, roles: list):
     
     # Get all users in the festival
     query = """
@@ -97,21 +97,33 @@ async def send_message_to_everyone(message: MessageSendEveryone, user_id: int):
     
     user_ids = [row["user_id"] for row in result]
     
-    columns = ["festival_id", "user_from", "user_to", "msg"]
+    role = "User"
+    if "Referent" in roles:
+        role = "Referent"
+    if "Admin" in roles:
+        role = "Admin"
     
-    values = [[message.festival_id, user_id, user, message.message] for user in user_ids]
+    columns = ["festival_id", "user_to", "user_from", "user_from_username", "user_from_role", "msg"]
+    
+    values = [[message.festival_id, user, user_id, username, role, message.message] for user in user_ids]
     
     await db.insert_many("messages", values, columns)
     
     return {"message": "Message sent to everyone"}
 
 # Function to send a message to a poste
-async def send_message_to_poste(message: MessageSendPoste, user_id: int):
+async def send_message_to_poste(message: MessageSendPoste, user_id: int, username: str, roles: list):
     
     # Get all users in the poste
     result = await get_users_for_referent(user_id, message.festival_id)
     
     user_ids = []
+    
+    role = "User"
+    if "Referent" in roles:
+        role = "Referent"
+    if "Admin" in roles:
+        role = "Admin"
     
     for row in result:
         inscriptions = row["inscriptions"]
@@ -121,9 +133,9 @@ async def send_message_to_poste(message: MessageSendPoste, user_id: int):
                     user_ids.append(inscription["user_id"])
                     
     # Send the message to all users in the poste
-    columns = ["festival_id", "user_from", "user_to", "msg"]
+    columns = ["festival_id", "user_to", "user_from", "user_from_username", "user_from_role", "msg"]
     
-    values = [[message.festival_id, user_id, user, message.message] for user in user_ids]
+    values = [[message.festival_id, user, user_id, username, role, message.message] for user in user_ids]
     
     await db.insert_many("messages", values, columns)
     

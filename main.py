@@ -118,7 +118,7 @@ async def insert_test_data(db):
     await db.execute(query, user_id, festival_id, festival_id2)
     
     query = """
-    DELETE FROM postes WHERE festival_id = $1 OR festival_id = $2;"""
+    DELETE FROM postes WHERE (festival_id = $1 OR festival_id = $2);"""
     
     await db.execute(query, festival_id, festival_id2)
     
@@ -192,6 +192,12 @@ async def insert_test_data(db):
     await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 4", "78", "YOOOOOOOOOOOOOOOOO", "Dimanche", "16h-18h", False)
     await db.execute(query, user_id, festival_id, "Animation", "Antigone-Sud 3", "1", "MauvaiseZoneBenevole", "Samedi", "16h-18h", False)
     
+    
+    # Delete from referents
+    query = """
+    DELETE FROM referents WHERE user_id = $1;"""
+    
+    await db.execute(query, user_id)
     
     # Assign a referent to a poste
     query = """

@@ -24,6 +24,9 @@ from ..controllers.inscription_controller import (
     )
 from ..models.user import User
 from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole, AssignInscriptionPoste, AssignInscriptionZoneBenevole
+from ..models.message import MessageSendEveryone
+from ..controllers.message_controller import send_message_to_everyone
+from ..controllers.festival_controller import get_active_festival
 
 
 inscription_router = APIRouter(
@@ -69,7 +72,13 @@ async def get_nb_inscriptions_zone_benevoles_route(festival_id: int, user: Annot
 
 @inscription_router.put("/poste/auto-assign-flexibles", response_model=dict, description="Auto assign flexibles to postes")
 async def auto_assign_flexibles_to_postes_route(user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
-    return await auto_assign_flexibles_to_postes()
+    result = await auto_assign_flexibles_to_postes()
+    # Get active festival
+    festival = await get_active_festival()
+    festival_id = festival.festival_id
+    # Send a message to everyone to inform them of the changes
+    result2 = await send_message_to_everyone(MessageSendEveryone(festival_id=festival_id, message="Les inscriptions pour les postes ont été mises à jour. Veuillez vérifier vos inscriptions."), user.user_id, user.username, user.roles)
+    return result
 
 
 @inscription_router.put("/zone-benevole/auto-assign-flexibles", response_model=dict, description="Auto assign flexibles to zones benevoles")

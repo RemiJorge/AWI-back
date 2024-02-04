@@ -42,11 +42,11 @@ async def delete_all_messages_route(festival_id: int, user: Annotated[User, Secu
 
 @message_router.post("/everyone", response_model=dict, description="Send a message to everyone")
 async def send_message_to_everyone_route(message: MessageSendEveryone, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
-    return await send_message_to_everyone(message, user.user_id)
+    return await send_message_to_everyone(message, user.user_id, user.username, user.roles)
 
 @message_router.post("/notify-poste", response_model=dict, description="Send a message to everyone in your poste")
 async def send_message_to_poste_route(message: MessageSendPoste, user: Annotated[User, Security(verify_token, scopes=["Referent"])]):
-    return await send_message_to_poste(message, user.user_id)
+    return await send_message_to_poste(message, user.user_id, user.username, user.roles)
 
 # Get number of new messages
 @message_router.get("/new/{festival_id}", response_model=dict, description="Get the number of new messages")

@@ -1,5 +1,6 @@
 from ..database.db_session import get_db
 import json
+from .user_controller import get_role_ids
 
 db = get_db()
 
@@ -13,6 +14,25 @@ async def assign_referent_to_poste(user_id: int, poste_id: int, festival_id: int
     ON CONFLICT (user_id, poste_id, festival_id) DO NOTHING;"""
 
     result = await db.execute(query, user_id, poste_id, festival_id)
+    
+    role_ids = await get_role_ids(["Referent"])
+    ref_role_id = role_ids[0]
+    
+    # Check if the user has the referent role
+    query = """
+    SELECT * FROM user_roles WHERE user_id = $1 AND role_id = $2;
+    """
+    
+    result = await db.fetch_rows(query, user_id, ref_role_id)
+    
+    if len(result) == 0:
+        # Insert into role table
+        query = """
+        INSERT INTO user_roles (user_id, role_id)
+        VALUES ($1, $2);
+        """
+        
+        result = await db.execute(query, user_id, ref_role_id)
 
     return { "message" :"Referent assigned to poste successfully" }
 
@@ -23,6 +43,23 @@ async def unassign_referent_from_poste(user_id: int, poste_id: int, festival_id:
     DELETE FROM referents WHERE user_id = $1 AND poste_id = $2 AND festival_id = $3;"""
 
     result = await db.execute(query, user_id, poste_id, festival_id)
+    
+    # If the user has no more postes, remove the referent role
+    query = """
+    SELECT * FROM referents WHERE user_id = $1;
+    """
+    
+    result = await db.fetch_rows(query, user_id)
+    
+    if len(result) == 0:
+        role_ids = await get_role_ids(["Referent"])
+        ref_role_id = role_ids[0]
+        
+        query = """
+        DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2;
+        """
+        
+        result = await db.execute(query, user_id, ref_role_id)
 
     return { "message" :"Referent unassigned from poste successfully" }
 
