@@ -5,7 +5,8 @@ from ..controllers.referent_controller import (
     assign_referent_to_poste,
     get_referents_for_poste,
     get_users_for_referent,
-    unassign_referent_from_poste
+    unassign_referent_from_poste,
+    get_my_postes
 )
 from ..models.user import User
 from pydantic import BaseModel
@@ -40,3 +41,7 @@ async def get_users_for_referent_route(festival_id: int,user: Annotated[User, Se
 @referent_router.delete("/unassign", response_model=dict, description="Unassign a referent from a poste")
 async def unassign_referent_from_poste_route(poste_ref: AssignReferent, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
     return await unassign_referent_from_poste(poste_ref.user_id, poste_ref.poste_id, poste_ref.festival_id)
+
+@referent_router.get("/my-postes/{festival_id}", response_model=list, description="Get all postes for a referent")
+async def get_my_postes_route(festival_id: int, user: Annotated[User, Security(verify_token, scopes=["Referent"])]):
+    return await get_my_postes(user.user_id, festival_id)

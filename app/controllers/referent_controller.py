@@ -119,3 +119,23 @@ async def get_users_for_referent(user_id: int, festival_id: int):
     return result
     
     
+# Function to get all my postes for a referent
+async def get_my_postes(user_id: int, festival_id: int):
+
+    query = """
+    SELECT
+        postes.poste_id,
+        postes.poste,
+        postes.description_poste
+    FROM
+        referents
+    INNER JOIN
+        postes ON referents.poste_id = postes.poste_id
+    WHERE
+        referents.user_id = $1 AND referents.festival_id = $2;"""
+
+    result = await db.fetch_rows(query, user_id, festival_id)
+    
+    result = [dict(row) for row in result]
+
+    return result
