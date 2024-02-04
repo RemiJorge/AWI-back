@@ -12,6 +12,10 @@ user_router = APIRouter(
     tags=["user"]
 )
 
+@user_router.get("/my-info", response_model=User, description="Get my info")
+async def get_my_info(user: Annotated[None, Security(verify_token, scopes=["User"])]):
+    return await find_user_by_user_id(user.user_id)
+
 @user_router.get("/{user_id}", response_model=User, description="Get a user by user id")
 async def get_user(user_id: int, user: Annotated[ User , Security(verify_token, scopes=["Admin"])]):
     return await find_user_by_user_id(user_id)
@@ -33,7 +37,7 @@ async def update_user_info_route(user: Annotated[None, Security(verify_token, sc
     return await update_user_info(user, new_info)
 
 @user_router.get("/search/username", response_model=list[User], description="Search for users by username")
-async def search_users_route(user: Annotated[None, Security(verify_token, scopes=["User"])], username: str, page: int = 1, limit: int = 10):
+async def search_users_route(user: Annotated[None, Security(verify_token, scopes=["Admin"])], username: str, page: int = 1, limit: int = 10):
     return await search_users(page, limit, username)
     
 

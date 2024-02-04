@@ -22,6 +22,10 @@ from ..controllers.user_controller import find_user_by_username, find_user_by_em
 from ..models.user import User
 from ..models.auth import UserAndToken, TokenData
 
+# import smtplib
+# from email.mime.multipart import MIMEMultipart
+# from email.mime.text import MIMEText
+
 
 # GLOBAL VARIABLES
 
@@ -279,3 +283,27 @@ async def register_user(user: User):
     # Create the user in the database
     payload = await create_user(user)
     return payload
+
+
+# def send_email(subject, body, to_email, smtp_server, smtp_port, sender_email, sender_password):
+#     # Set up the MIME
+#     message = MIMEMultipart()
+#     message['From'] = sender_email
+#     message['To'] = to_email
+#     message['Subject'] = subject
+
+#     # Attach the body of the email
+#     message.attach(MIMEText(body, 'plain'))
+
+#     # Connect to the SMTP server
+#     server = smtplib.SMTP(smtp_server, smtp_port)
+
+#     # Log in to the email account
+#     server.starttls()  # Use this line if your server requires a secure connection
+#     server.login(sender_email, sender_password)
+
+#     # Send the email
+#     server.sendmail(sender_email, to_email, message.as_string())
+
+#     # Quit the server
+#     server.quit()

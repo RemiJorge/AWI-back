@@ -18,7 +18,6 @@ class User(BaseModel):
 class UpdateUser(BaseModel):
     username: str
     email: str
-    password: str
     telephone: str
     nom: str
     prenom: str
@@ -28,3 +27,5 @@ class UpdateUser(BaseModel):
     association: str
     
 
+class Password(BaseModel):
+    password: str

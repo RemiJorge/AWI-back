@@ -104,6 +104,14 @@ async def activate_festival(festival_id: int, is_active: bool):
         
         result = await db.execute(query)
         
+        # Deactivate all messages
+        query = """
+        UPDATE messages
+        SET is_active = FALSE
+        WHERE is_active = TRUE;"""
+        
+        result = await db.execute(query)
+        
         # Deactivate all festivals
         query = """
         UPDATE festivals
@@ -135,6 +143,14 @@ async def activate_festival(festival_id: int, is_active: bool):
         SET is_active = TRUE
         WHERE festival_id = $1;"""
     
+        result = await db.execute(query, festival_id)
+        
+        # Activate messages for the festival
+        query = """
+        UPDATE messages
+        SET is_active = TRUE
+        WHERE festival_id = $1;"""
+        
         result = await db.execute(query, festival_id)
         
         # Activate the festival

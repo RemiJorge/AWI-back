@@ -286,9 +286,6 @@ async def update_user_info(user: User, new_info: UpdateUser):
         email_exists = await find_user_by_email(new_info.email)
         if email_exists is not None:
             return { "message": "Email already exists" }
-        
-    # Hash the password
-    hashed_password = pwd_context.hash(new_info.password)
     
     query = """
     UPDATE users
@@ -296,17 +293,16 @@ async def update_user_info(user: User, new_info: UpdateUser):
         username = $1,
         email = $2,
         telephone = $3,
-        password = $4,
-        nom = $5,
-        prenom = $6,
-        tshirt = $7,
-        vegan = $8,
-        hebergement = $9,
-        association = $10
+        nom = $4,
+        prenom = $5,
+        tshirt = $6,
+        vegan = $7,
+        hebergement = $8,
+        association = $9
     WHERE
-        user_id = $11;
+        user_id = $10;
     """
-    await db.execute(query, new_info.username, new_info.email, new_info.telephone, hashed_password, new_info.nom, new_info.prenom, new_info.tshirt, new_info.vegan, new_info.hebergement, new_info.association, user.user_id)
+    await db.execute(query, new_info.username, new_info.email, new_info.telephone, new_info.nom, new_info.prenom, new_info.tshirt, new_info.vegan, new_info.hebergement, new_info.association, user.user_id)
     return { "message": "User info successfully updated" }
 
 # Function to search for users by username with pagination
@@ -362,3 +358,17 @@ async def search_users(page: int, limit: int, username: str):
             )
         users.append(user)
     return users
+
+
+# Function to update user password
+async def update_user_password(user_id: int, new_password: str):
+    hashed_password = pwd_context.hash(new_password)
+    query = """
+    UPDATE users
+    SET
+        password = $1
+    WHERE
+        user_id = $2;
+    """
+    await db.execute(query, hashed_password, user_id)
+    return { "message": "Password successfully updated" }
