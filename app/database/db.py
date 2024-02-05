@@ -5,11 +5,11 @@ class Database:
 
     # Initialize the database 
     def __init__(self):
-        self.user = os.environ.get("POSTGRES_USER")
-        self.password = os.environ.get("POSTGRES_PASSWORD")
-        self.host = os.environ.get("POSTGRES_HOST")
-        self.port = os.environ.get("POSTGRES_PORT")
-        self.database = os.environ.get("POSTGRES_DB")
+        self.user = os.environ.get("POSTGRES_USER_1")
+        self.password = os.environ.get("POSTGRES_PASSWORD_1")
+        self.host = os.environ.get("POSTGRES_HOST_1")
+        self.port = os.environ.get("POSTGRES_PORT_1")
+        self.database = os.environ.get("POSTGRES_DB_1")
         self._cursor = None
 
         self._connection_pool = None
