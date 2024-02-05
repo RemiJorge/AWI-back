@@ -74,7 +74,7 @@ app.include_router(message_router)
 async def insert_test_data(db):
     # Get user_id of the test user which is user1
     query = """
-    SELECT user_id FROM users WHERE username = 'user1';"""
+    SELECT user_id FROM users WHERE username = 'sam';"""
     
     user_id = await db.fetch_val(query)
     
