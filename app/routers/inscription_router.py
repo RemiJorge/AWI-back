@@ -20,10 +20,12 @@ from ..controllers.inscription_controller import (
     assign_user_to_poste,
     delete_user_to_poste,
     delete_user_to_zone_benevole,
-    get_flexibles
+    get_flexibles,
+    express_inscription_poste,
+    express_inscription_zone_benevole
     )
 from ..models.user import User
-from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole, AssignInscriptionPoste, AssignInscriptionZoneBenevole
+from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole, AssignInscriptionPoste, AssignInscriptionZoneBenevole, ExpressInscriptionPoste
 from ..models.message import MessageSendEveryone, MessageSend
 from ..controllers.message_controller import send_message_to_everyone, send_message
 from ..controllers.festival_controller import get_active_festival
@@ -121,6 +123,10 @@ async def delete_user_to_zone_benevole_route(zone_benevole: AssignInscriptionZon
 @inscription_router.post("/poste/flexibles", response_model=list, description="Get flexibles with regards to a jour or a creneau")
 async def get_flexibles_poste_route(query: FlexiblesQuery, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
     return await get_flexibles(query.festival_id, query.jour, query.creneau)
+
+@inscription_router.post("/poste/express-inscription", response_model=dict, description="Express inscription to a poste")
+async def express_inscription_poste_route(inscriptions: ExpressInscriptionPoste, user: Annotated[User, Security(verify_token, scopes=["User"])]):
+    return await express_inscription_poste(user, inscriptions)
 
 # @inscription_router.get("/poste/my-postes", response_model=list, description="Get my postes inscriptions")
 # async def get_my_postes_inscriptions_route(user: Annotated[User, Security(verify_token, scopes=["User"])]):

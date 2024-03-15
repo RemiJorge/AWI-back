@@ -1,8 +1,9 @@
 from ..database.db_session import get_db
 from fastapi import HTTPException
 from ..models.user import User
-from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole, AssignInscriptionPoste, AssignInscriptionZoneBenevole
+from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole, AssignInscriptionPoste, AssignInscriptionZoneBenevole, ExpressInscriptionPoste
 import json
+from typing import List
 
 db = get_db()
 
@@ -528,6 +529,61 @@ async def get_flexibles(festival_id: int, jour: str, creneau: str):
     
     return result
 
+
+# Function to do express inscriptions to a poste
+async def express_inscription_poste(user: User, inscriptions: ExpressInscriptionPoste):
+    festival_id = inscriptions.festival_id
+    jour = inscriptions.jour
+    creneau = inscriptions.creneau
+    postes = inscriptions.inscriptions
+    # We are going to delete all inscriptions for the user for that jour and creneau
+    query = """
+        DELETE FROM
+            inscriptions
+        WHERE
+            user_id = $1
+            AND jour = $2
+            AND creneau = $3
+            AND is_poste = True
+            AND festival_id = $4;
+    """
+    
+    await db.execute(query, user.user_id, jour, creneau, festival_id)
+    
+    # We are going to insert the new inscriptions
+    query = INSERT_QUERY
+    
+    inscriptions = [(user.user_id, festival_id, inscription.poste, "", "", "", jour, creneau, True) for inscription in postes]
+    
+    await db.execute_many(query, inscriptions)
+    
+    return {"message": "Successfully express inscribed to poste"}
+
+
+# Function to do express inscriptions to a zone benevole
+async def express_inscription_zone_benevole(user: User, jour: str, creneau: str, festival_id: int, zone_benevoles: list):
+    # We are going to delete all inscriptions for the user for that jour and creneau
+    query = """
+        DELETE FROM
+            inscriptions
+        WHERE
+            user_id = $1
+            AND jour = $2
+            AND creneau = $3
+            AND is_poste = False
+            AND festival_id = $4;
+    """
+    
+    await db.execute(query, user.user_id, jour, creneau, festival_id)
+    
+    # We are going to insert the new inscriptions
+    query = INSERT_QUERY
+    
+    inscriptions = [(user.user_id, festival_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, jour, creneau, False) for inscription in zone_benevoles]
+    
+    await db.execute_many(query, inscriptions)
+    
+    return {"message": "Successfully express inscribed to zone benevole"}
 
 
 

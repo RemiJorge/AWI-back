@@ -39,3 +39,9 @@ class BatchInscriptionPoste(BaseModel):
 class BatchInscriptionZoneBenevole(BaseModel):
     inscriptions: list[InscriptionZoneBenevole]
     desinscriptions: list[InscriptionZoneBenevole]
+    
+class ExpressInscriptionPoste(BaseModel):
+    festival_id: int
+    jour: str
+    creneau: str
+    inscriptions: list[InscriptionPoste]
