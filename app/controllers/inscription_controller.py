@@ -1,7 +1,7 @@
 from ..database.db_session import get_db
 from fastapi import HTTPException
 from ..models.user import User
-from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole, AssignInscriptionPoste, AssignInscriptionZoneBenevole, ExpressInscriptionPoste
+from ..models.inscription import InscriptionPoste, InscriptionZoneBenevole, BatchInscriptionPoste, BatchInscriptionZoneBenevole, AssignInscriptionPoste, AssignInscriptionZoneBenevole, ExpressInscriptionPoste, ExpressInscriptionZoneBenevole
 import json
 from typing import List
 
@@ -536,7 +536,7 @@ async def express_inscription_poste(user: User, inscriptions: ExpressInscription
     jour = inscriptions.jour
     creneau = inscriptions.creneau
     postes = inscriptions.inscriptions
-    # We are going to delete all inscriptions for the user for that jour and creneau
+    # We are going to delete all poste inscriptions for the user for that jour and creneau
     query = """
         DELETE FROM
             inscriptions
@@ -561,8 +561,12 @@ async def express_inscription_poste(user: User, inscriptions: ExpressInscription
 
 
 # Function to do express inscriptions to a zone benevole
-async def express_inscription_zone_benevole(user: User, jour: str, creneau: str, festival_id: int, zone_benevoles: list):
-    # We are going to delete all inscriptions for the user for that jour and creneau
+async def express_inscription_zone_benevole(user: User, inscriptions: ExpressInscriptionZoneBenevole):
+    festival_id = inscriptions.festival_id
+    jour = inscriptions.jour
+    creneau = inscriptions.creneau
+    zones_benevoles = inscriptions.inscriptions
+    # We are going to delete all zone benevole inscriptions for the user for that jour and creneau
     query = """
         DELETE FROM
             inscriptions
@@ -579,7 +583,7 @@ async def express_inscription_zone_benevole(user: User, jour: str, creneau: str,
     # We are going to insert the new inscriptions
     query = INSERT_QUERY
     
-    inscriptions = [(user.user_id, festival_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, jour, creneau, False) for inscription in zone_benevoles]
+    inscriptions = [(user.user_id, festival_id, inscription.poste, inscription.zone_plan, inscription.zone_benevole_id, inscription.zone_benevole_name, jour, creneau, False) for inscription in zones_benevoles]
     
     await db.execute_many(query, inscriptions)
     

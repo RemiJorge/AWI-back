@@ -45,3 +45,9 @@ class ExpressInscriptionPoste(BaseModel):
     jour: str
     creneau: str
     inscriptions: list[InscriptionPoste]
+    
+class ExpressInscriptionZoneBenevole(BaseModel):
+    festival_id: int
+    jour: str
+    creneau: str
+    inscriptions: list[InscriptionZoneBenevole]
