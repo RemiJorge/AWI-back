@@ -550,6 +550,22 @@ async def express_inscription_poste(user: User, inscriptions: ExpressInscription
     
     await db.execute(query, user.user_id, jour, creneau, festival_id)
     
+    # Also remove the inscriptions for the zone benevoles under the poste "Animation" for the same jour and creneau
+    if "Animation" not in [inscription.poste for inscription in postes]:
+        query = """
+        DELETE FROM
+            inscriptions
+        WHERE
+            user_id = $1
+            AND poste = 'Animation'
+            AND jour = $2
+            AND creneau = $3
+            AND is_poste = False
+            AND festival_id = $4;
+        """
+        
+        await db.execute(query, user.user_id, jour, creneau, festival_id)
+    
     # We are going to insert the new inscriptions
     query = INSERT_QUERY
     
