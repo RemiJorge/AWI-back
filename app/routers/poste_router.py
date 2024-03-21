@@ -4,7 +4,8 @@ from ..controllers.auth_controller import verify_token
 from ..controllers.poste_controller import (
     create_poste,
     get_all_postes,
-    delete_poste
+    delete_poste,
+    get_referents_for_poste
 )
 from ..models.user import User
 from pydantic import BaseModel
@@ -42,3 +43,9 @@ async def get_all_postes_route(festival_id: int, user: Annotated[User, Security(
 @poste_router.delete("/", response_model=dict, description="Delete a poste")
 async def delete_poste_route(poste: DeletePoste, user: Annotated[User, Security(verify_token, scopes=["Admin"])]):
     return await delete_poste(poste.festival_id, poste.name)
+
+
+# Get referents for a poste
+@poste_router.get("/{festival_id}/{poste}", description="Get referents by poste")
+async def get_referents_poste_route(festival_id: int, poste: str, user: Annotated[User, Security(verify_token, scopes=["User"])]):
+    return await get_referents_for_poste(festival_id, poste)
